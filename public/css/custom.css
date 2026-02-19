@@ -1,0 +1,35 @@
+.alert {
+    margin: 10px;
+    width: auto !important;
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.alert p {
+    margin: 0px !important;
+}
+
+.alert {
+    margin: 10px;
+    width: auto !important;
+    padding: 5px 17px;
+    font-size: 13px;
+    border-radius: 50px;
+    text-transform: uppercase;
+}
+
+.poll-card {
+    padding: 10px;
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 3px #3f3f3f;
+}
+
+.profile-logo {
+    max-width: 120px;
+    width: 100%;
+    border: 5px solid #4482de;
+    margin-top: 15px !important;
+    display: block;
+    margin: auto;
+}

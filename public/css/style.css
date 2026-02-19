@@ -1,0 +1,66 @@
+a.sidebar-brand, .splash-icon {
+    background: #009541 !important;
+}
+
+li.sidebar-item a {
+    text-decoration: none;
+}
+
+main.content {
+    height: calc(100% - 177px);
+}
+
+.required {
+    border-color: #ff9191 !important;
+}
+
+.modal-backdrop.fade.in {
+    display: none;
+}
+
+.modal.fade.show {
+    display: block !important;
+}
+
+span.active-1 {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    background: green;
+    border-radius: 50%;
+}
+
+.modal-dialog.modal-xl {
+    max-width: 90%;
+}
+
+div#deleteModal {
+    z-index: 999999;
+}
+
+.modal.fade.show {
+    background: #00000020;
+}
+
+.profile-card {
+    display: flex ;
+    padding: 1px 10px;
+    color: #960301;
+    background: #ffffff;
+    border-radius: 40px;
+}
+
+.profile-card img {
+    width: auto;
+    height: 30px;
+    margin: auto;
+    vertical-align: middle;
+}
+
+.user-name {
+    margin-left: 6px;
+}
+
+.navbar-expand .navbar-collapse {
+    height: 50px;
+}

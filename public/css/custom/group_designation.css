@@ -1,0 +1,79 @@
+.voter-item {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    cursor: pointer;
+}
+
+.voter-name {
+    font-weight: bold;
+    color: #4482de;
+}
+
+.voter-details span {
+    padding: 2px 8px;
+    font-size: 9px;
+    display: inline-block;
+    background: orange;
+    font-weight: bold;
+    border-radius: 10px;
+    color: #000;
+}
+
+/* Paste this if you need this */
+.container-fluid>.row {
+    height: calc(100% - 80px);
+}
+.container-fluid {
+    height: 100%;
+}
+
+.voter-list {
+    height: 48.5vh;
+    overflow: auto;
+    border: 1px solid #ccc;
+}
+
+.voter-list .action {
+    float: right;
+    font-size: 18px;
+}
+
+.member-item {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.member-name {
+    font-size: 15px;
+    font-weight: bold;
+    color: #3490dc;
+}
+
+.member-details span {
+    padding: 2px 8px;
+    font-size: 9px;
+    display: inline-block;
+    background: orange;
+    font-weight: bold;
+    border-radius: 10px;
+    color: #000;
+}
+
+.voter-item.active {
+    background: #c7eaff;
+}
+
+.voter-item.active a {
+    display: none;
+}
+
+.member-item>.action {
+    float: right;
+    font-size: 20px;
+}
+
+.member-list {
+    border: 1px solid #ccc;
+    height: 52.5vh;
+    overflow: auto;
+}

@@ -1,0 +1,59 @@
+body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,form,fieldset,input,textarea,p,blockquote,th,td { margin:0; padding:0; }
+table { border-collapse:collapse; border-spacing:0; }
+fieldset,img { border:0; }
+address,caption,cite,code,dfn,em,strong,th,var { font-style:normal; font-weight:normal; }
+caption,th { text-align:left; }
+h1,h2,h3,h4,h5,h6 { font-size:100%; font-weight:normal; }
+q:before,q:after { content:''; }
+abbr,acronym { border:0; }
+
+body { background: #fff; }
+/* optional Container STYLES */
+.chart { height: 100%; margin: 5px; width: 100%; }
+.Treant > .node {
+     padding: 10px;
+     border: 1px solid #484848;
+     background: #000000;
+     display: flex !important;
+     font-size: 12px;
+
+    }
+.Treant > .node img { 
+    width: 100%; height: 100%;
+    width: 20px;
+    margin-right: 10px; 
+}
+
+.Treant .collapse-switch { width: 100%; height: 100%; border: none; }
+.Treant .node.collapsed { background-color: #c1c1c1; }
+.Treant .node.collapsed .collapse-switch { background: none; }
+p.node-name {
+    color: black;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.node.mother-tree {
+    background: white;
+    border: 3px solid #960301;
+}
+
+.node {
+    background-color: blue;    /* Example background color */
+    color: white;              /* Text color */
+    padding: 10px;             /* Padding inside the node */
+    border-radius: 5px;        /* Optional: rounded corners */
+    text-align: center;        /* Center-align text */
+    display: inline-block;     /* Ensure inline-block display */
+}
+
+.node .node-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.node .node-content p {
+    margin: 0 5px; /* Add some spacing between paragraphs */
+}

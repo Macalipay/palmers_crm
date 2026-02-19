@@ -1,0 +1,128 @@
+@media (min-width: 1200px) {
+    .container.login {
+        max-width: 1400px !important;
+    }
+}
+@media (min-width: 768px) {
+    input#password, input#email {
+        width: 150px !important;
+    }
+    p.form-label {
+        width: 150px !important;
+    }
+}
+@media (min-width: 992px) {
+    input#password, input#email {
+        width: 250px !important;
+    }
+    p.form-label {
+        width: 250px !important;
+    }
+}
+p.section-title {
+    margin-bottom: 2em;
+}
+p.company-logo img {
+    width: 140px;
+}
+p.company-logo {
+    text-align: center;
+}
+p.section-title {
+    text-align: center;
+}
+p.section-title span {
+    color: #3f3f3f;
+    font-size: 20px;
+    font-weight: bold;
+}
+.col-md-4.form-0 {
+    padding: 0px !important;
+    background: #fff;
+    padding-top: 4em !important;
+    color: #3f3f3f;
+    padding-bottom: 4em !important;
+}
+input#password, input#email {
+    width: 250px;
+    margin: auto;
+    border-radius: 0px !important;
+}
+p.form-label {
+    width: 250px;
+    margin: auto;
+    margin-bottom: 5px;
+    color: #3f3f3f;
+    text-transform: uppercase;
+}
+.form-1 {
+    margin-top: 1em;
+}
+.col-md-8.slider-0 {
+    padding: 0px !important;
+    background: #dddddd;
+}
+p.form-label.forgot-password {
+    text-align: right;
+    text-transform: unset !important;
+}
+p.form-btn {
+    text-align: center;
+}
+p.form-btn button.btn.btn-primary {
+    width: 120px;
+    background-color: #47b4ea !important;
+    border-color: #47b4ea !important;
+}
+.form-1.submit-btn {
+    margin-top: 4em;
+}
+.form-1.register-btn {
+    text-align: center;
+}
+.form-1.register-btn a span {
+    color: #3f3f3f;
+}
+.form-carousel {
+    margin: 4em;
+}
+
+
+html, body {
+    height: 100%;
+    margin: 0;
+  }
+  .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+  }
+  div#app {
+      height: 100% !important;
+  }
+  main.py-4 {
+      height: 100%;
+  }
+  form {
+      height: 100%;
+  }
+  span.invalid-feedback {
+      text-align: center;
+      color: #ffb100;
+  }
+  .form-control.is-invalid {
+      border-color: #ffb100;
+  }
+  .form-carousel, .carousel, .carousel-inner, .carousel-item {
+      height: 100%;
+      margin: 0px;
+  }
+  .carousel-item {
+      background-position: center center !important;
+      background-size: cover !important;
+  }
+
+  body.theme-blue {
+    background: #960301;
+}

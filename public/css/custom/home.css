@@ -1,0 +1,333 @@
+body {
+    font-family: system-ui;
+}
+
+hr {
+    margin: 0px;
+}
+
+nav.navbar.navbar-expand.navbar-theme {
+    background: #153d77;
+}
+.wrapper:before {
+    display: none;
+}
+
+.g-c>div {
+    background: #fff;
+    height: 100%;
+}
+
+.g-c>div>div {
+    padding: 10px;
+}
+
+.g-c h5 {
+    font-size: 12px;
+    color: #3f3f3f;
+    font-weight: bold;
+}
+
+.translate>span {
+    display: block;
+    font-size: 10px;
+}
+
+.grid-candidate { grid-area: g_candidate; }
+.grid-gender { grid-area: g_gender; }
+.grid-degree { grid-area: g_degree; }
+.grid-contribution { grid-area: g_contribution; }
+.grid-expenditures { grid-area: g_expenditures; }
+.grid-voter { grid-area: g_voter; }
+.grid-events { grid-area: g_events; }
+.grid-ranking { grid-area: g_ranking; }
+.grid-age { grid-area: g_age; }
+.grid-barangay { grid-area: g_barangay; }
+
+#gender, #degree {
+    width: 100% !important;
+    max-height: 16vh !important;
+    margin: auto !important;
+}
+
+.dash-card {
+    display: flex;
+    color: #fff;
+    transition: .3s;
+    cursor: pointer;
+}
+
+.dash-card .icon {
+    height: auto;
+    width: 33px;
+    font-size: 18px;
+    line-height: normal;
+    margin: 0px;
+    padding: 3px;
+    color: #3f3f3f;
+}
+
+.dash-card .details {
+    width: 100%;
+    font-size: 18px;
+    color: #3f3f3f;
+    font-weight: bold;
+    text-align: center;
+    font-family: system-ui;
+}
+
+.dash-card:hover {
+    transform: scale(1.05);
+}
+
+.dash-card.selected {
+    /* box-shadow: 0 0 0px 3px #ffe602; */
+    background: #ffeaa1;
+}
+
+main.content {
+    margin-top: 15px;
+    height: calc(100% - 125px);
+}
+
+.breadcrumps {
+    margin-bottom: 7px;
+    border-radius: 5px;
+    color: #000;
+    font-size: 12px;
+}
+
+.breadcrumps span {
+    display: inline-block;
+    padding: 2px 8px;
+    font-weight: bold;
+    color: #fff;
+    border-radius: 3px;
+}
+
+.breadcrumps>span:nth-child(1) {
+    background: #2560bd;
+}
+
+#home_report {
+    display: grid;
+    grid-template-areas:
+      'g_candidate g_gender g_degree g_contribution'
+      'g_candidate g_gender g_degree g_expenditures'
+      'g_ranking g_voter g_voter g_voter'
+      'g_ranking g_age g_barangay g_events';
+    height: calc(100% - 40px);
+    grid-template-rows: repeat(2, 65px) repeat(2, 1fr);
+    grid-template-columns: 300px repeat(3, 1fr);
+    gap: 5px;
+    transition: .3s;
+}
+
+div#candidate-info {
+    display: flex;
+    padding: 15px;
+    background: #4482de;
+    height: 100%;
+}
+
+.grid-ranking.g-c>div {
+    background: #d9d9d9;
+}
+
+.candidate-details {
+    width: 100%;
+    padding: 5px 15px;
+    color: #fff;
+}
+
+.c-name {
+    font-size: 20px;
+    font-weight: bold;
+    font-family: system-ui;
+}
+
+.candidate-pic {
+    margin: auto;
+}
+
+div#contribution h5,
+div#expenditure h5 {
+    margin: 0px;
+}
+
+.amount {
+    font-size: 17px;
+    font-weight: bold;
+    text-align: right;
+}
+
+.c-voter {
+    font-size: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+
+.footer {
+    padding: 0 1.5rem;
+}
+
+.dataTables_scroll {
+    height: 20vh;
+    overflow: auto;
+}
+
+
+table.table.table-striped.dataTable.no-footer {
+    height: auto !important;
+}
+
+
+table#generated_table th,
+table#generated_table td {
+    text-align: left !important;
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+div#generated_table_paginate a {
+    padding: 3px 8px;
+    background: #eee;
+    font-size: 9px;
+    font-weight: bold;
+    color: #3f3f3f !important;
+}
+
+.table.dataTable tr th {
+    padding: 0px !important;
+    font-size: 9px !important;
+    width: auto !important;
+}
+
+th.sorting_disabled, th.sorting_disabled>div {
+    height: auto !important;
+}
+
+.dataTables_scrollHeadInner {
+    display: none;
+}
+
+table#generated_table th {
+    border-bottom: 2px solid #3f3f3f;
+    background: #909090;
+    color: #fff;
+}
+
+div#generated_table_info {
+    padding-top: 5px !important;
+    font-size: 9px;
+    font-weight: bold;
+}
+
+div#generated_table_length {
+    font-size: 9px;
+    margin-top: 9px;
+}
+
+div#generated_table_filter {
+    font-size: 9px;
+    margin-top: 3px;
+}
+
+.table table {
+    width: 100%;
+}
+
+.table {
+    width: 100%;
+    margin-bottom: 0px !important;
+    background-color: transparent;
+    height: 26vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.table th {
+    padding: 5px;
+    background: #fff;
+    color: #3f3f3f;
+    font-size: 12px;
+    text-align: center;
+    font-weight: bold !important;
+    border: 0px;
+    border-top: 1px solid #3f3f3f;
+    border-bottom: 1px solid #3f3f3f !important;
+    text-transform: uppercase;
+}
+
+.table td {
+    padding: 5px;
+    text-align: center;
+    color: #3f3f3f;
+    font-size: 12px;
+}
+
+.event-item {
+    padding: 5px 10px;
+    border-bottom: 1px solid #ccc;
+    cursor: pointer;
+    transition: .3s;
+}
+
+.event-item:hover {
+    background: #eee;
+}
+
+.event-name {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.event-count {
+    font-size: 10px;
+}
+
+.rank-item {
+    display: flex;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: .3s;
+}
+
+.rank-details {
+    width: 100%;
+    padding: 0px 10px;
+}
+
+.rank-name {
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.rank-position {
+    font-size: 10px;
+    text-transform: uppercase;
+}
+
+.rank-count {
+    font-size: 12px;
+}
+
+.rank-item.active {
+    background: #4482de;
+    color: #fff;
+}
+
+.rank-level {
+    font-size: 30px;
+    padding: 0 4px;
+    font-weight: bold;
+    width: 50px;
+}
+
+.rank-picture {
+    margin: auto;
+}

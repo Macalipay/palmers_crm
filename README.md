@@ -1,1 +1,2 @@
-# palmers_crm
+composer update
+php artisan db:seed --class=DatabaseSeeder

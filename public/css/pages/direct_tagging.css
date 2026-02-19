@@ -1,0 +1,223 @@
+div#viewModal>.modal-dialog.modal-lg {
+    max-width: 1340px;
+}
+.row.program_details>.form-group.col-12>button.btn.btn-primary {
+    float: right;
+}
+.row.program_details>.form-group.col-12 {
+    border-top: 1px solid #e3e3e3;
+    padding-top: 15px;
+}
+.form-group {
+    margin-bottom: 0px;
+}
+label.font-weight-bold {
+    margin-bottom: 0px;
+    font-size: 14px;
+    text-transform: uppercase;
+    color: #072145;
+}
+.modal-title {
+    font-size: 12px;
+    font-weight: bold;
+}
+.spacer {
+    margin: 2em;
+}
+.table.dataTable tr th {
+    font-weight: 500;
+    font-size: 12px;
+    padding: 5px 10px !important;
+    border-bottom: 2px solid #3f3f3f;
+    font-weight: bold;
+}
+table.dataTable tbody td {
+    padding: 8px 10px;
+    padding: 5px 10px;
+    font-size: 13px;
+    border: 0px;
+}
+.action {
+    padding: 3px 5px;
+    font-size: 8px !important;
+    margin-right: 5px;
+    border: 0px;
+}
+
+.voter-list-item {
+    padding: 5px 10px;
+    font-size: 12px;
+    border: 1px solid #ccc;
+}
+
+.voter-list {
+    height: 48vh;
+    overflow: auto;
+}
+.voter-action {
+    float: right;
+    color: #3490dc;
+    cursor: pointer;
+}
+.voter-action-activity {
+    float: right;
+    color: #3490dc;
+    cursor: pointer;
+}
+.voter-name {
+    font-weight: bold;
+}
+.voter-precinct span {
+    font-size: 10px;
+    background: #3490dc;
+    padding: 2px 7px;
+    color: #fff;
+    border-radius: 50px;
+}
+
+.voter-list-item.active {
+    background: #ffe7a6;
+}
+
+.voter-list-item.active .voter-action {
+    display: none;
+}
+span.ct-1 {
+    padding: 0 10px;
+    background: green;
+    color: #fff;
+}
+span.ct-0 {
+    padding: 0 10px;
+    background: red;
+    color: #fff;
+}
+.card {
+border: 0;
+border-radius: 0.5rem;
+box-shadow: 0 2px 4px rgba(0,0,20,.08), 0 1px 2px rgba(0,0,20,.08);
+}
+.rounded-bottom {
+border-bottom-left-radius: 0.375rem !important;
+border-bottom-right-radius: 0.375rem !important;
+}
+
+.avatar-xxl {
+height: 7.5rem;
+width: 7.5rem;
+}
+.nav-lt-tab {
+border-top: 1px solid var(--dashui-border-color);
+}
+.px-4 {
+padding-left: 1rem!important;
+padding-right: 1rem!important;
+}
+
+.avatar-sm {
+height: 2rem;
+width: 2rem;
+}
+
+.nav-lt-tab .nav-item {
+margin: -0.0625rem 1rem 0;
+}
+.nav-lt-tab .nav-item .nav-link {
+border-radius: 0;
+border-top: 2px solid transparent;
+color: var(--dashui-gray-600);
+font-weight: 500;
+padding: 1rem 0;
+}
+
+.pt-20 {
+padding-top: 8rem!important;
+}
+
+.avatar-xxl.avatar-indicators:before {
+bottom: 5px;
+height: 16%;
+right: 17%;
+width: 16%;
+}
+.avatar-online:before {
+background-color: #198754;
+}
+.avatar-indicators:before {
+border: 2px solid #FFF;
+border-radius: 50%;
+bottom: 0;
+content: "";
+display: table;
+height: 30%;
+position: absolute;
+right: 5%;
+width: 30%;
+}
+
+.avatar-xxl {
+height: 7.5rem;
+width: 7.5rem;
+}
+.mt-n10 {
+margin-top: -3rem!important;
+}
+.me-2 {
+margin-right: 0.5rem!important;
+}
+.align-items-end {
+align-items: flex-end!important;
+}
+.rounded-circle {
+border-radius: 50%!important;
+}
+.border-2 {
+--dashui-border-width: 2px;
+}
+.border {
+border: 1px solid #dcdcdc !important;
+}
+
+.py-6 {
+padding-bottom: 1.5rem!important;
+padding-top: 1.5rem!important;
+}
+
+.bg-gray-300 {
+--dashui-bg-opacity: 1;
+background-color: #cbd5e1!important;
+}
+
+.mb-6 {
+margin-bottom: 1.5rem!important;
+}
+.align-items-center {
+align-items: center!important;
+}
+
+
+.mb-4 {
+margin-bottom: 1rem!important;
+}
+
+.mb-8 {
+margin-bottom: 2rem!important;
+}
+.shadow-none {
+box-shadow: none!important;
+}
+
+.card>.list-group:last-child {
+border-bottom-left-radius: 0.5rem;
+border-bottom-right-radius: 0.5rem;
+border-bottom-width: 0;
+}
+.card>.list-group:first-child {
+border-top-left-radius: 0.5rem;
+border-top-right-radius: 0.5rem;
+border-top-width: 0;
+}
+.card>.list-group {
+border-bottom: inherit;
+border-top: inherit;
+}
