@@ -75,9 +75,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <h1 class="display-5 mt-1">{{ $overall_completed_call }} / {{ $total_call_today }}</h1>
+                            <h1 class="display-5 mt-1">{{ $total_call_today }}</h1>
                             <div class="mb-0">
-                                <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i> Total calls</span> scheduled for today
+                                <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i> Calls in</span> different statuses today
                             </div>
                         </div>
                     </div>
@@ -85,7 +85,7 @@
                         <div class="card-body side-card">
                             <div class="row">
                                 <div class="col mt-0">
-                                    <h5 class="card-title">Total Calls For Today</h5>
+                                    <h5 class="card-title">All Completed Calls Today</h5>
                                 </div>
 
                                 <div class="col-auto">
@@ -96,9 +96,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <h1 class="display-5 mt-1">{{ $overall_completed_call }} / {{ $total_call_today }}</h1>
+                            <h1 class="display-5 mt-1">{{ $overall_completed_call }}</h1>
                             <div class="mb-0">
-                                <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i> Total calls</span> scheduled for today
+                                <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i> Calls with status</span> COMPLETED today
                             </div>
                         </div>
                     </div>
@@ -117,7 +117,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <h1 class="display-5 mt-1">{{ $completed_call }}/40</h1>
+                            <h1 class="display-5 mt-1">{{ $completed_call }}/60</h1>
                             <div class="mb-0">
                                 <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i>DONE</span> calls scheduled for today
                             </div>
@@ -171,7 +171,15 @@
                                             <p class="mb-2"><strong>SALES ASSOCIATE:</strong> <span id="sales_associate"></span></p>
                                         </div>
                                         <div class="col-6">
-                                            <p class="mb-2"><strong>PO/OF NO:</strong> <span id="po_no"></span></p>
+                                            <p class="mb-2">
+                                                <strong>PO/OF NO:</strong> <span id="po_no"></span>
+                                                <button type="button" class="btn btn-sm btn-outline-primary ml-2" onclick="viewCompanyPofoHistory()">
+                                                    VIEW ALL PO/FO
+                                                </button>
+                                                <button type="button" id="backOriginalPofoBtn" class="btn btn-sm btn-outline-secondary ml-2" onclick="backToOriginalPofo()" style="display:none;">
+                                                    BACK TO ORIGINAL PO/FO
+                                                </button>
+                                            </p>
                                         </div>
                                         <div class="col-6">
                                             <p class="mb-2"><strong>TOTAL PRICE:</strong> <span id="total_price"></span></p>
@@ -220,6 +228,7 @@
                                     
                                     <div class="form-group col-12">
                                         <label>Remarks</label>
+                                        <input type="hidden" id="pofo_company_id" name="pofo_company_id">
                                         <input type="hidden" class="form-control" id="telemarketing_detail_id" name="telemarketing_detail_id">
                                         <textarea class="form-control" id="remarks" name="remarks" placeholder="Enter Remarks" cols="30" rows="5"></textarea>
                                     </div>
@@ -237,7 +246,7 @@
                         
                     </div>
                     <div class="modal-footer text-right">
-                        <button class="btn btn-primary" onclick="saveRecordDetails()">SAVE</button>
+                        <button id="saveRecordDetailsBtn" class="btn btn-primary" onclick="saveRecordDetails()">SAVE</button>
                     </div>
                 </div>
             </div>
@@ -323,6 +332,22 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" id="companyPofoModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Connected PO/FO Records - <span id="company_pofo_title"></span></h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <table id="company_pofo_table" class="table table-striped" style="width:100%"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <div class="modal fade" id="filterModal" tabindex="-1" role="dialog" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
@@ -353,6 +378,7 @@
                             <div class="form-group col-12">
                                 <label>Status</label>
                                 <select name="f_status" id="f_status" class="form-control">
+                                    <option value="">ALL</option>
                                     <option value="TO DO">TO DO</option>
                                     <option value="IN PROGRESS">IN PROGRESS</option>
                                     <option value="CANCELLED">CANCELLED</option>

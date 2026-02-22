@@ -9,6 +9,31 @@ var formatter = new Intl.NumberFormat('en-PH', {
     currency: 'PHP',
 });
 
+function getFilterYear() {
+    return $('#filter_year').val() || moment().format('YYYY');
+}
+
+function getFilterMonthForApi() {
+    return $('#filter_date').val() || 'all';
+}
+
+function initYearMonthFilters() {
+    var currentYear = parseInt(moment().format('YYYY'), 10);
+    var fallbackYear = parseInt(window.monthlyDefaultYear || currentYear, 10);
+    var fallbackMonth = window.monthlyDefaultMonth || moment().format('MM');
+    var maxYear = Math.max(currentYear + 1, fallbackYear + 1);
+    var minYear = Math.min(currentYear - 10, fallbackYear - 10);
+    var options = '';
+
+    for (var y = maxYear; y >= minYear; y--) {
+        options += `<option value="${y}">${y}</option>`;
+    }
+
+    $('#filter_year').html(options);
+    $('#filter_year').val(String(fallbackYear));
+    $('#filter_date').val(fallbackMonth);
+}
+
 var dynamicColors = function() {
     var r = Math.floor(Math.random() * 255);
     var g = Math.floor(Math.random() * 255);
@@ -17,7 +42,8 @@ var dynamicColors = function() {
  };
 
 $(function() {
-    generateReport('all');
+    initYearMonthFilters();
+    generateReport(getFilterMonthForApi());
     
     $(".sidebar-toggle").on("click touch", function() {
         
@@ -35,7 +61,12 @@ function handleClick(event, chartContext, config) {
     
     var label = clickedData.x;
 
-    $.post('/monthly/get_calls', { _token: $('meta[name="csrf-token"]').attr('content'), date: $('#filter_date').val(), status: label }).done((response) => {
+    $.post('/monthly/get_calls', {
+        _token: $('meta[name="csrf-token"]').attr('content'),
+        date: $('#filter_date').val(),
+        year: getFilterYear(),
+        status: label
+    }).done((response) => {
         var el = '';
         var status = '';
         var lead = '';
@@ -92,7 +123,7 @@ function handleClick(event, chartContext, config) {
 }
 
 function generateReport(date) {
-    $.get('/monthly/get_record/' + date, function(response) {
+    $.get('/monthly/get_record/' + date, { year: getFilterYear() }, function(response) {
         var division_html = '';
         var associate_html = '';
         var agent_html = '';
@@ -105,7 +136,7 @@ function generateReport(date) {
         $('#growth h1').text(formatter.format(response.growth.amount));
         $('#growth .perc').text(response.growth.percentage.toFixed(2) + "%");
         
-        if(date === "all") {
+        if(date === "all" || status_chart === null) {
             
             seriesData = [
                 { x: 'COMPLETED', y: response.calls.completed },
@@ -357,12 +388,16 @@ function generateReport(date) {
 }
 
 function filterByDate() {
-    generateReport($('#filter_date').val());
+    generateReport(getFilterMonthForApi());
     hideDetails();
 }
 
 function getDaily() {
-    $.post('/monthly/get_daily', { _token: $('meta[name="csrf-token"]').attr('content'), date: $('#filter_date').val() }).done((response) => {
+    $.post('/monthly/get_daily', {
+        _token: $('meta[name="csrf-token"]').attr('content'),
+        date: $('#filter_date').val(),
+        year: getFilterYear()
+    }).done((response) => {
         var el = '';
         if(response.sale.length !== 0) {
             $.each(response.sale, (i,v)=>{
@@ -408,7 +443,12 @@ function getDaily() {
 
 function getDivision(id) {
     
-    $.post('/monthly/get_division', { _token: $('meta[name="csrf-token"]').attr('content'), date: $('#filter_date').val(), division_id: id }).done(function(response) {
+    $.post('/monthly/get_division', {
+        _token: $('meta[name="csrf-token"]').attr('content'),
+        date: $('#filter_date').val(),
+        year: getFilterYear(),
+        division_id: id
+    }).done(function(response) {
         // console.log(response);
         var division_html = '';
         $('#division_record .card-title').html('<i class="fas fa-list"></i> Total sales per branch');
@@ -432,7 +472,12 @@ function getDivision(id) {
 }
 
 function getBranch(id) {
-    $.post('/monthly/get_branch', { _token: $('meta[name="csrf-token"]').attr('content'), date: $('#filter_date').val(), branch_id: id }).done((response) => {
+    $.post('/monthly/get_branch', {
+        _token: $('meta[name="csrf-token"]').attr('content'),
+        date: $('#filter_date').val(),
+        year: getFilterYear(),
+        branch_id: id
+    }).done((response) => {
         var el = '';
         if(response.sale.length !== 0) {
             $.each(response.sale, (i,v)=>{
@@ -481,7 +526,12 @@ function getBranch(id) {
 }
 
 function getAgent(id) {
-    $.post('/monthly/get_agent', { _token: $('meta[name="csrf-token"]').attr('content'), date: $('#filter_date').val(), agent: id }).done((response) => {
+    $.post('/monthly/get_agent', {
+        _token: $('meta[name="csrf-token"]').attr('content'),
+        date: $('#filter_date').val(),
+        year: getFilterYear(),
+        agent: id
+    }).done((response) => {
         var el = '';
         if(response.sale.length !== 0) {
             $.each(response.sale, (i,v)=>{
@@ -529,7 +579,12 @@ function getAgent(id) {
 }
 
 function getAssociates(id) {
-    $.post('/monthly/get_associate', { _token: $('meta[name="csrf-token"]').attr('content'), date: $('#filter_date').val(), associate: id }).done((response) => {
+    $.post('/monthly/get_associate', {
+        _token: $('meta[name="csrf-token"]').attr('content'),
+        date: $('#filter_date').val(),
+        year: getFilterYear(),
+        associate: id
+    }).done((response) => {
         var el = '';
         if(response.sale.length !== 0) {
             $.each(response.sale, (i,v)=>{
@@ -577,7 +632,12 @@ function getAssociates(id) {
 }
 
 function getIndustry(detail) {
-    $.post('/monthly/get_industry', { _token: $('meta[name="csrf-token"]').attr('content'), date: $('#filter_date').val(), industry: detail }).done((response) => {
+    $.post('/monthly/get_industry', {
+        _token: $('meta[name="csrf-token"]').attr('content'),
+        date: $('#filter_date').val(),
+        year: getFilterYear(),
+        industry: detail
+    }).done((response) => {
         var el = '';
         $.each(response.sale, (i,v)=>{
             el += `<div class="sales-item-company">

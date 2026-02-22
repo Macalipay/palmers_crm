@@ -48,6 +48,22 @@
                     </a>
                 </li>
 
+            @role('SUPER ADMIN|Super Admin')
+                <li class="sidebar-header">
+                    Reports
+                </li>
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="{{ url('reports/sales') }}">
+                        <i class="align-middle mr-2 fas fa-fw fa-file-alt"></i> <span class="align-middle">Sales Report</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="{{ url('reports/telemarketing') }}">
+                        <i class="align-middle mr-2 fas fa-fw fa-phone"></i> <span class="align-middle">Telemarketing Report</span>
+                    </a>
+                </li>
+            @endrole
+
             <li class="sidebar-header">
                 Transaction
             </li>

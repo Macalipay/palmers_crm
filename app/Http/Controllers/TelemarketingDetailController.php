@@ -9,6 +9,8 @@ use App\Sale;
 use App\SaleDetail;
 use App\TelemarketingCallLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Auth;
 
 class TelemarketingDetailController extends Controller
@@ -16,6 +18,47 @@ class TelemarketingDetailController extends Controller
     public function get($id) {
         if(request()->ajax()) {
             return datatables()->of(TelemarketingDetail::with('user')->where('telemarketing_id', $id)->get())
+            ->addIndexColumn()
+            ->make(true);
+        }
+    }
+
+    public function companyPofo($companyId)
+    {
+        if (request()->ajax()) {
+            $latestSaleIds = Sale::where('company_id', $companyId)
+                ->whereNotNull('po_no')
+                ->where('po_no', '!=', '')
+                ->selectRaw('MAX(id) as id')
+                ->groupBy('po_no');
+
+            $latestTelemarketingBySale = DB::table('telemarketing_details')
+                ->join('sale_details', 'telemarketing_details.order_id', '=', 'sale_details.id')
+                ->selectRaw('sale_details.sale_id, MAX(telemarketing_details.id) as latest_telemarketing_detail_id')
+                ->groupBy('sale_details.sale_id');
+
+            return datatables()->of(
+                DB::table('sales')
+                    ->leftJoin('users as sales_agents', 'sales.user_id', '=', 'sales_agents.id')
+                    ->leftJoin('sales_associates', 'sales.sales_associate_id', '=', 'sales_associates.id')
+                    ->leftJoinSub($latestTelemarketingBySale, 'latest_tm', function ($join) {
+                        $join->on('latest_tm.sale_id', '=', 'sales.id');
+                    })
+                    ->leftJoin('telemarketing_details as tm', 'tm.id', '=', 'latest_tm.latest_telemarketing_detail_id')
+                    ->leftJoin('users as telemarketers', 'tm.assigned_to', '=', 'telemarketers.id')
+                    ->whereIn('sales.id', $latestSaleIds)
+                    ->orderBy('sales.date_purchased', 'desc')
+                    ->orderBy('sales.id', 'desc')
+                    ->select(
+                        'sales.id',
+                        'sales.po_no',
+                        'sales.date_purchased',
+                        'sales.amount',
+                        'sales_agents.name as sales_agent_name',
+                        'sales_associates.sales_associate as sales_associate_name',
+                        'telemarketers.name as telemarketer_name'
+                    )
+            )
             ->addIndexColumn()
             ->make(true);
         }
@@ -79,29 +122,43 @@ class TelemarketingDetailController extends Controller
 
     public function update(Request $request, $id)
     {
-       $request['assigned_to'] = Auth::user()->id;
+        $telemarketing = TelemarketingDetail::findOrFail($id);
+        $previousStatus = $telemarketing->status;
 
-        $updated = TelemarketingDetail::find($id)->update($request->all());
+        $request['assigned_to'] = Auth::user()->id;
+        $updated = $telemarketing->update($request->all());
 
         if ($updated) {
-            $telemarketing = TelemarketingDetail::where('id', $id)->first();
             $sale_detail = SaleDetail::where('id', $telemarketing->order_id)->first();
             $sale = Sale::where('id', $sale_detail->sale_id)->first();
+            $newStatus = $request->status;
+            $statusChanged = $previousStatus !== $newStatus;
 
-            $call_log = [
-                'sale_id' => $sale->id,
-                'telemarketing_detail_id' => $request->telemarketing_detail_id,
-                'new_order_id' => $request->new_order_id,
-                'total_amount' => $request->total_amount,
-                'status' => $request->status,
-                'remarks' => $request->remarks,
-                'created_by' => Auth::user()->id,
-                'updated_by' => Auth::user()->id,
-            ];
+            if ($statusChanged) {
+                $call_log = [
+                    'sale_id' => $sale->id,
+                    'telemarketing_detail_id' => $telemarketing->id,
+                    'new_order_id' => $request->new_order_id,
+                    'total_amount' => $request->total_amount,
+                    'status' => $newStatus,
+                    'remarks' => $request->remarks,
+                    'created_by' => Auth::user()->id,
+                    'updated_by' => Auth::user()->id,
+                ];
 
-            TelemarketingCallLog::create($call_log);
+                TelemarketingCallLog::create($call_log);
+
+                Log::info('Telemarketing status changed', [
+                    'telemarketing_detail_id' => $telemarketing->id,
+                    'sale_id' => $sale->id,
+                    'changed_by' => Auth::user()->id,
+                    'status_from' => $previousStatus,
+                    'status_to' => $newStatus,
+                    'changed_at' => now()->toDateTimeString(),
+                ]);
+            }
             
-            return response()->json(['message' => 'Update and log saved successfully.']);
+            return response()->json(['message' => 'Update saved successfully.']);
         }
 
         return response()->json(['error' => 'Failed to update telemarketing detail.'], 500);

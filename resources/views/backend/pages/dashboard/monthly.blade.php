@@ -14,21 +14,28 @@
         </div>
         <div class="col-3">
             <div class="filter text-right">
-                <select name="filter_date" id="filter_date" class="form-control form-control-sm" onchange="filterByDate()">
-                    <option value="">Select a Month</option>
-                    <option value="01">January</option>
-                    <option value="02">February</option>
-                    <option value="03">March</option>
-                    <option value="04">April</option>
-                    <option value="05">May</option>
-                    <option value="06">June</option>
-                    <option value="07">July</option>
-                    <option value="08">August</option>
-                    <option value="09">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                </select>
+                <div class="row">
+                    <div class="col-6 pr-1">
+                        <select name="filter_year" id="filter_year" class="form-control form-control-sm" onchange="filterByDate()"></select>
+                    </div>
+                    <div class="col-6 pl-1">
+                        <select name="filter_date" id="filter_date" class="form-control form-control-sm" onchange="filterByDate()">
+                            <option value="">Select Month</option>
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04">April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -205,6 +212,10 @@
 <script src="/js/datatables.min.js"></script>
 <script src="/js/apex.js"></script>
 <script src="/js/phil.js"></script>
+<script>
+    window.monthlyDefaultYear = "{{ $defaultYear }}";
+    window.monthlyDefaultMonth = "{{ $defaultMonth }}";
+</script>
 <script src="/js/page/monthly.js"></script>
 @endsection
 

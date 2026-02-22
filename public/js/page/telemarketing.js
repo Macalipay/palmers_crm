@@ -4,6 +4,8 @@ var table = null;
 var record_id = null;
 
 var details_id = null;
+var originalPofoState = null;
+var isPofoViewMode = false;
 
 var delete_module = null;
 var selectedIds = []; 
@@ -18,6 +20,25 @@ var filter = {
     contact: '',
     calls: '',
 };
+
+function setRecordDetailsMode(viewOnly) {
+    isPofoViewMode = viewOnly;
+
+    $('#status').prop('disabled', viewOnly);
+    $('#call_duration').prop('disabled', viewOnly);
+    $('#new_order_id').prop('disabled', viewOnly);
+    $('#total_amount').prop('disabled', viewOnly);
+    $('#remarks').prop('disabled', viewOnly);
+
+    $('#saveRecordDetailsBtn').toggle(!viewOnly);
+    $('#backOriginalPofoBtn').toggle(viewOnly);
+
+    if (viewOnly) {
+        $('#refreshButton').css({ 'pointer-events': 'none', 'opacity': '0.5' });
+    } else {
+        $('#refreshButton').css({ 'pointer-events': 'auto', 'opacity': '1' });
+    }
+}
 
 $(function() {
 
@@ -391,9 +412,11 @@ function edit(id){
                 formatDescription(data.data.description.replace("CUSTOMER ORDERED", "").trim())
             );
             $('#detail_company_name').text(data.data.telemarketing.company.company_name);
+            $('#company_pofo_title').text(data.data.telemarketing.company.company_name);
             $('#detail_contact_person').text(data.data.telemarketing.company.contact_person);
             $('#detail_contact_no').text(data.data.telemarketing.company.contact_no);
             $('#po_no').text(data.data.csd.sale.po_no);
+            $('#pofo_company_id').val(data.data.telemarketing.company.id);
             $('#total_price').text('₱' + saleAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 }));
             $('#item_price').text('₱' + itemAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 }));
             $('#detail_remarks').text(data.data.remarks);
@@ -410,6 +433,24 @@ function edit(id){
             } else {
                 $('#completedField').hide();  // Show if already completed
             }
+
+            originalPofoState = {
+                saleId: data.data.csd.sale.id,
+                itemId: data.data.csd.id,
+                date: rawDate.toLocaleDateString('en-US', options),
+                task: data.data.task,
+                description: formatDescription(data.data.description.replace("CUSTOMER ORDERED", "").trim()),
+                poNo: data.data.csd.sale.po_no,
+                totalPrice: 'â‚±' + saleAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 }),
+                itemPrice: 'â‚±' + itemAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 }),
+                detailRemarks: data.data.remarks,
+                assignedDate: data.data.assigned_date,
+                status: data.data.status,
+                remarksValue: data.data.remarks || '',
+                callDuration: data.data.call_duration || ''
+            };
+
+            setRecordDetailsMode(false);
 
             $('#recordDetails').modal('show');
             $.each(data, function() {
@@ -607,6 +648,11 @@ function addDetails() {
 }
 
 function saveRecordDetails() {
+    if (isPofoViewMode) {
+        toastr.warning("VIEW ONLY", "You are viewing connected PO/FO history. Click BACK TO ORIGINAL PO/FO to edit.");
+        return;
+    }
+
     var data = {
         _token: $('meta[name="csrf-token"]').attr('content'),
         telemarketing_detail_id: $('#telemarketing_detail_id').val(),
@@ -836,6 +882,131 @@ function po_detail(id, item_id) {
             }
         }
     });
+}
+
+function viewCompanyPofoHistory() {
+    var companyId = $('#pofo_company_id').val();
+
+    if (!companyId) {
+        toastr.warning("PO/FO HISTORY", "Company record is not available.");
+        return;
+    }
+
+    if ($.fn.DataTable.isDataTable('#company_pofo_table')) {
+        $('#company_pofo_table').DataTable().destroy();
+    }
+
+    var pofoTable = $('#company_pofo_table').DataTable({
+        responsive: true,
+        serverSide: true,
+        paging: true,
+        ordering: false,
+        ajax: {
+            url: '/telemarketing_details/company-pofo/' + companyId,
+            type: 'GET'
+        },
+        columns: [
+            { data: 'DT_RowIndex', title: '#' },
+            {
+                data: 'po_no',
+                title: 'PO/FO Number',
+                render: function(data) {
+                    return data ? data : '--';
+                }
+            },
+            {
+                data: 'date_purchased',
+                title: 'Date Purchased',
+                render: function(data) {
+                    return data ? moment(data).format('MMM D, YYYY') : '--';
+                }
+            },
+            {
+                data: 'amount',
+                title: 'Amount',
+                render: function(data) {
+                    return formatCurrency(data);
+                }
+            },
+            {
+                data: 'sales_agent_name',
+                title: 'Sales Agent',
+                render: function(data) {
+                    return data ? data : '--';
+                }
+            },
+            {
+                data: 'sales_associate_name',
+                title: 'Sales Associate',
+                render: function(data) {
+                    return data ? data : '--';
+                }
+            },
+            {
+                data: 'telemarketer_name',
+                title: 'Assigned Telemarketer',
+                render: function(data) {
+                    if (!data || data === 'Super Admin') {
+                        return 'UNASSIGNED';
+                    }
+
+                    return data;
+                }
+            }
+        ]
+    });
+
+    $('#company_pofo_table tbody').off('click').on('click', 'tr', function () {
+        var data = pofoTable.row(this).data();
+
+        if (!data) {
+            return;
+        }
+
+        po_detail(data.id, -1);
+        $('#detail_date').text(data.date_purchased ? moment(data.date_purchased).format('MMM D, YYYY') : '--');
+        $('#detail_task').text('PO/FO HISTORY');
+        $('#detail_description').text('Viewing connected transaction details from PO/FO history.');
+        $('#po_no').text(data.po_no ? data.po_no : '--');
+        $('#total_price').text(formatCurrency(data.amount));
+        $('#item_price').text('--');
+        $('#detail_remarks').text('--');
+        $('#assigned_date').text('--');
+        $('#completedField').hide();
+        setRecordDetailsMode(true);
+        $('#companyPofoModal').modal('hide');
+    });
+
+    $('#companyPofoModal').modal('show');
+}
+
+function backToOriginalPofo() {
+    if (!originalPofoState) {
+        toastr.warning("PO/FO HISTORY", "Original record is not available.");
+        return;
+    }
+
+    po_detail(originalPofoState.saleId, originalPofoState.itemId);
+    $('#detail_date').text(originalPofoState.date);
+    $('#detail_task').text(originalPofoState.task);
+    $('#detail_description').text(originalPofoState.description);
+    $('#po_no').text(originalPofoState.poNo ? originalPofoState.poNo : '--');
+    $('#total_price').text(originalPofoState.totalPrice);
+    $('#item_price').text(originalPofoState.itemPrice);
+    $('#detail_remarks').text(originalPofoState.detailRemarks ? originalPofoState.detailRemarks : '--');
+    $('#assigned_date').text(originalPofoState.assignedDate ? originalPofoState.assignedDate : '--');
+
+    $('#status').val(originalPofoState.status);
+    $('#remarks').val(originalPofoState.remarksValue);
+    $('#call_duration').val(originalPofoState.callDuration);
+
+    if (originalPofoState.status === 'COMPLETED') {
+        $('#completedField').show();
+    } else {
+        $('#completedField').hide();
+    }
+
+    setRecordDetailsMode(false);
 }
 
 function clearFilter() {

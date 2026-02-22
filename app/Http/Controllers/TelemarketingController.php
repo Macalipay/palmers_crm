@@ -25,7 +25,9 @@ class TelemarketingController extends Controller
         $query = TelemarketingDetail::with(['user', 'telemarketing', 'telemarketing.company', 'csd', 'csd.item'])
             ->join('sale_details', 'telemarketing_details.order_id', '=', 'sale_details.id')
             ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
-            ->whereHas('csd.item', fn($q) => $q->where('branch_id', 2))
+            ->whereHas('csd.item', function ($q) {
+                $q->where('branch_id', 2);
+            })
             ->where('sales.branch_id', '!=', 3)
             ->select('telemarketing_details.*', 'telemarketing_details.created_at', 'telemarketing_details.updated_at', 'telemarketing_details.status');
 
@@ -67,7 +69,7 @@ class TelemarketingController extends Controller
         $total_amount = TelemarketingDetail::where('assigned_to', $userId)
                             ->where('status', 'COMPLETED')
                             ->sum('total_amount');
-        $formatted_total_amount = '₱' . number_format($total_amount, 2);
+        $formatted_total_amount = '???' . number_format($total_amount, 2);
     
         $user_todo_call = $statusCounts['TO DO'] ?? 0;
         $user_cancelled_call = $statusCounts['CANCELLED'] ?? 0;
@@ -181,7 +183,7 @@ class TelemarketingController extends Controller
                         ->where('status', 'COMPLETED')
                         ->whereBetween('date', [$start_date, $end_date])
                         ->sum('total_amount');
-        $formatted_total_amount = '₱' . number_format($total_amount, 2);
+        $formatted_total_amount = '???' . number_format($total_amount, 2);
 
         $total_active_call = TelemarketingDetail::where('assigned_to', $user)->whereBetween('date', [$start_date, $end_date])->count();
         $total_backlogs = TelemarketingDetail::where('assigned_to', $user)->where('status', '!=', 'COMPLETED')->whereBetween('date', [$start_date, $end_date])->count();
@@ -292,7 +294,6 @@ class TelemarketingController extends Controller
                 ->whereHas('csd.item', function ($query) {
                     $query->where('branch_id', 2);
                 })
-                ->where('telemarketing_details.assigned_to', 1)
                 ->where('sales.branch_id', '!=', 3)
                 ->groupBy('sales.company_id')
                 ->select('telemarketing_details.*') 
@@ -321,7 +322,7 @@ class TelemarketingController extends Controller
         }
         if ($request->has('assigned_to') && !empty($request->assigned_to)) {
             \Log::info('Assigned to filter applied: ', [$request->assigned_to]);
-            $query->where('assigned_to', $request->assigned_to);
+            $query->where('telemarketing_details.assigned_to', $request->assigned_to);
         }
         if ($request->has('status') && !empty($request->status)) {
             \Log::info('Status filter applied: ', [$request->status]);
@@ -339,7 +340,7 @@ class TelemarketingController extends Controller
         }
         if ($request->unassigned != 0) {
             \Log::info('Unassigned filter applied');
-            $query->where('assigned_to', 1);
+            $query->where('telemarketing_details.assigned_to', 1);
         }
         if ($request->contact != 0) {
             \Log::info('Contact filter applied: ', [$request->contact]);
@@ -365,3 +366,4 @@ class TelemarketingController extends Controller
 
 
 }
+
