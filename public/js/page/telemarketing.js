@@ -10,6 +10,7 @@ var isPofoViewMode = false;
 var delete_module = null;
 var selectedIds = []; 
 var counterTimer = null;
+var sessionRedirecting = false;
 
 var filter = {
     _token: '',
@@ -21,6 +22,27 @@ var filter = {
     contact: '',
     calls: '',
 };
+
+function handleSessionExpiry(xhr) {
+    if (!xhr || sessionRedirecting) {
+        return false;
+    }
+
+    var status = xhr.status;
+    var responseText = xhr.responseText || '';
+    var looksLikeLoginHtml = responseText.indexOf('name="email"') !== -1 && responseText.indexOf('name="password"') !== -1;
+
+    if (status === 401 || status === 419 || looksLikeLoginHtml) {
+        sessionRedirecting = true;
+        toastr.warning('SESSION EXPIRED', 'Please log in again.');
+        setTimeout(function() {
+            window.location.href = '/login';
+        }, 800);
+        return true;
+    }
+
+    return false;
+}
 
 function setRecordDetailsMode(viewOnly) {
     isPofoViewMode = viewOnly;
@@ -76,6 +98,15 @@ function applyCompletionRateColor(rate) {
 }
 
 $(function() {
+    $.fn.dataTable.ext.errMode = 'none';
+
+    $(document).ajaxError(function(event, xhr) {
+        handleSessionExpiry(xhr);
+    });
+
+    $(document).on('xhr.dt', function(e, settings, json, xhr) {
+        handleSessionExpiry(xhr);
+    });
 
     document.getElementById("sidebar").classList.add("toggled");
 
