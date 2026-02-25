@@ -88,18 +88,18 @@ function exportAllRows(e, dt, button, config) {
 
     dt.one('preXhr', function (event, s, data) {
         data.start = 0;
-        data.length = 2147483647;
+        data.length = -1;
 
         dt.one('preDraw', function (event, settings) {
-            var buttonClass = button[0].className.split(' ')[0];
+            var exportType = (config.extend || '').toLowerCase();
 
-            if (buttonClass.indexOf('buttons-excel') >= 0) {
+            if (exportType.indexOf('excel') >= 0) {
                 $.fn.dataTable.ext.buttons.excelHtml5.action.call(self, e, dt, button, config);
-            } else if (buttonClass.indexOf('buttons-csv') >= 0) {
+            } else if (exportType.indexOf('csv') >= 0) {
                 $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button, config);
-            } else if (buttonClass.indexOf('buttons-pdf') >= 0) {
+            } else if (exportType.indexOf('pdf') >= 0) {
                 $.fn.dataTable.ext.buttons.pdfHtml5.action.call(self, e, dt, button, config);
-            } else if (buttonClass.indexOf('buttons-print') >= 0) {
+            } else if (exportType.indexOf('print') >= 0) {
                 $.fn.dataTable.ext.buttons.print.action.call(self, e, dt, button, config);
             }
 
