@@ -53,7 +53,13 @@ class SalesReportController extends Controller
             'branch',
         ])->orderByDesc('id');
 
-        return DataTables::eloquent($query)->addIndexColumn()->toJson();
+        $dataTable = DataTables::eloquent($query)->addIndexColumn();
+
+        if ((int) $request->get('export_all', 0) === 1) {
+            $dataTable->skipPaging();
+        }
+
+        return $dataTable->toJson();
     }
 
     public function summary(Request $request)

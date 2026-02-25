@@ -88,18 +88,21 @@ function exportAllRows(e, dt, button, config) {
 
     dt.one('preXhr', function (event, s, data) {
         data.start = 0;
-        data.length = -1;
+        data.length = 2147483647;
+        data.export_all = 1;
 
         dt.one('preDraw', function (event, settings) {
             var exportType = (config.extend || '').toLowerCase();
+            var buttonEl = button && button[0] ? button[0] : null;
+            var buttonClassName = buttonEl ? buttonEl.className : '';
 
-            if (exportType.indexOf('excel') >= 0) {
+            if (exportType.indexOf('excel') >= 0 || buttonClassName.indexOf('buttons-excel') >= 0) {
                 $.fn.dataTable.ext.buttons.excelHtml5.action.call(self, e, dt, button, config);
-            } else if (exportType.indexOf('csv') >= 0) {
+            } else if (exportType.indexOf('csv') >= 0 || buttonClassName.indexOf('buttons-csv') >= 0) {
                 $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button, config);
-            } else if (exportType.indexOf('pdf') >= 0) {
+            } else if (exportType.indexOf('pdf') >= 0 || buttonClassName.indexOf('buttons-pdf') >= 0) {
                 $.fn.dataTable.ext.buttons.pdfHtml5.action.call(self, e, dt, button, config);
-            } else if (exportType.indexOf('print') >= 0) {
+            } else if (exportType.indexOf('print') >= 0 || buttonClassName.indexOf('buttons-print') >= 0) {
                 $.fn.dataTable.ext.buttons.print.action.call(self, e, dt, button, config);
             }
 
@@ -107,9 +110,12 @@ function exportAllRows(e, dt, button, config) {
                 settings._iDisplayStart = oldStart;
                 data.start = oldStart;
                 data.length = settings._iDisplayLength;
+                data.export_all = 0;
             });
 
-            setTimeout(dt.ajax.reload, 0, false);
+            setTimeout(function () {
+                dt.ajax.reload(null, false);
+            }, 0);
             return false;
         });
     });
