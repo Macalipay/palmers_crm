@@ -79,10 +79,10 @@ $(function() {
             type: 'GET'
         },
         columns: [
-            { data: null, title: '<input type="checkbox" id="select-all">', render: function(data, type, row, meta) {
+            { data: null, title: '<input type="checkbox" id="select-all">', searchable: false, orderable: false, render: function(data, type, row, meta) {
                 return '<input type="checkbox" class="select-row" data-id="' + row.id + '">';
             }},
-            { data: null, title: 'Action', render: function(data, type, row, meta) {
+            { data: null, title: 'Action', searchable: false, orderable: false, render: function(data, type, row, meta) {
                 return '<a href="#" onclick="edit(' + row.id + ')"><i class="align-middle fas fa-fw fa-tasks"></i></a>';
             }},
             { data: 'date', title: 'Date', 
@@ -597,7 +597,7 @@ function viewDetails(id) {
             type: 'GET'
         },
         columns: [
-            { data: null, title: 'Action', render: function(data, type, row, meta) {
+            { data: null, title: 'Action', searchable: false, orderable: false, render: function(data, type, row, meta) {
                 return '<a href="#" class="align-middle fas fa-fw fa-pen edit" title="Edit" data-toggle="modal" data-target="#defaultModalPrimary" id="'+row.id+'" onclick="edit_details('+row.id+')"></a>' + '<a href="#" data-toggle="modal" data-target="#confirmation" onclick="deleteRecord('+row.id+', 1)"><i class="align-middle fas fa-fw fa-trash"></i></a>';
             }},
             { data: 'date', title: 'Date', render: function(data, type, row, meta) {
@@ -750,10 +750,10 @@ function generateRecord() {
             data: filter
         },
         columns: [
-            { data: null, title: '<input type="checkbox" id="select-all">', render: function(data, type, row, meta) {
+            { data: null, title: '<input type="checkbox" id="select-all">', searchable: false, orderable: false, render: function(data, type, row, meta) {
                 return '<input type="checkbox" class="select-row" data-id="' + row.id + '">';
             }},
-            { data: null, title: 'Action', render: function(data, type, row, meta) {
+            { data: null, title: 'Action', searchable: false, orderable: false, render: function(data, type, row, meta) {
                 return '<a href="#" onclick="edit(' + row.id + ')"><i class="align-middle fas fa-fw fa-tasks"></i></a>';
             }},
             { data: 'date', title: 'Date', 

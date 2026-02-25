@@ -11,6 +11,7 @@ use App\TelemarketingCallLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Auth;
 
 class TelemarketingDetailController extends Controller
@@ -125,8 +126,19 @@ class TelemarketingDetailController extends Controller
         $telemarketing = TelemarketingDetail::findOrFail($id);
         $previousStatus = $telemarketing->status;
 
-        $request['assigned_to'] = Auth::user()->id;
-        $updated = $telemarketing->update($request->all());
+        $payload = $request->all();
+        $payload['assigned_to'] = Auth::user()->id;
+
+        // Guard against schema drift on environments where newer migrations are not yet applied.
+        if (!Schema::hasColumn('telemarketing_details', 'call_duration')) {
+            unset($payload['call_duration']);
+        }
+
+        if (!Schema::hasColumn('telemarketing_details', 'assigned_date')) {
+            unset($payload['assigned_date']);
+        }
+
+        $updated = $telemarketing->update($payload);
 
         if ($updated) {
             $sale_detail = SaleDetail::where('id', $telemarketing->order_id)->first();
