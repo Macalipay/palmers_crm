@@ -723,18 +723,28 @@ function saveRecordDetails() {
         remarks: $('#remarks').val(),
     }
 
+    var $saveBtn = $('#saveRecordDetailsBtn');
+    $saveBtn.prop('disabled', true);
+
     $.post('/'+page+'_details/update/'+$('#telemarketing_detail_id').val(), data).done(function(resp) {
         $('#generated_table').DataTable().draw();
         $('#recordDetails').modal('hide');
         clearDetails();
         refreshTelemarketingCounters();
+        toastr.success("RECORD UPDATED", (resp && resp.message) ? resp.message : "Update saved successfully.");
     }).fail(function(resp) {
-        var r = resp.responseJSON.errors;
+        var responseJson = resp.responseJSON || {};
+        var r = responseJson.errors || {};
+        var message = responseJson.message || "Failed to save record details.";
 
         $('.form-control').removeClass('required');
-        $.each(r, function(i,v) {
+        $.each(r, function(i, v) {
             $('#' + i).addClass('required');
         });
+
+        toastr.error("SAVE FAILED", message);
+    }).always(function() {
+        $saveBtn.prop('disabled', false);
     });
 }
 
