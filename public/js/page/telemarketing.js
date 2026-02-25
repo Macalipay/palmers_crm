@@ -101,6 +101,20 @@ $(function() {
         }
     });
 
+    // Keep mouse-wheel scrolling inside the record modal body.
+    $('#recordDetails').on('wheel', '.modal-body', function(e) {
+        e.stopPropagation();
+
+        var body = this;
+        var deltaY = e.originalEvent.deltaY;
+        var atTop = body.scrollTop <= 0;
+        var atBottom = Math.ceil(body.scrollTop + body.clientHeight) >= body.scrollHeight;
+
+        if ((deltaY < 0 && atTop) || (deltaY > 0 && atBottom)) {
+            e.preventDefault();
+        }
+    });
+
     refreshTelemarketingCounters();
     applyCompletionRateColor(parseFloat(($('#counter_complete_rate').text() || '0').replace('%', '')));
     if (counterTimer) {

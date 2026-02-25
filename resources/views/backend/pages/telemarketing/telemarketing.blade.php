@@ -697,6 +697,16 @@ h1.display-5.mt-1 {
     width: 100%;
     max-width: 90%;
 }
+
+#recordDetails .modal-content-fullscreen {
+    height: 95vh;
+}
+
+#recordDetails .modal-body {
+    overflow-y: auto;
+    max-height: calc(95vh - 120px);
+    overscroll-behavior: contain;
+}
 .activity-feed {
   padding: 15px;
   list-style: none;
