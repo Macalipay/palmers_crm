@@ -276,6 +276,7 @@ Route::group(['prefix' => 'telemarketing', 'middleware' => ['auth']], function (
     Route::get          ('/getDashboard_range/{user}/{start}/{end}',  'TelemarketingController@getDashboard_range'                            )->name('get');
     Route::get          ('/status_range/{id}/{start}/{end}',  'TelemarketingController@status_range'                            )->name('get');
     Route::get          ('/get',                         'TelemarketingController@get'                            )->name('get');
+    Route::get          ('/counters',                    'TelemarketingController@counters'                       )->name('counters');
     Route::post         ('/save',                        'TelemarketingController@save'                           )->name('save');
     Route::post         ('/assign',                      'TelemarketingController@assignedTask'                   )->name('save');
     Route::get          ('/edit/{id}',                   'TelemarketingController@edit'                           )->name('reason');

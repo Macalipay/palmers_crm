@@ -43,7 +43,7 @@
                         <div class="card-body side-card">
                             <div class="row">
                                 <div class="col mt-0">
-                                    <h5 class="card-title">Overall Calls</h5>
+                                    <h5 class="card-title">Completion Rate</h5>
                                 </div>
 
                                 <div class="col-auto">
@@ -54,30 +54,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <h1 class="display-5 mt-1">{{ $total_active_call }}</h1>
+                            <h1 class="display-5 mt-1" id="counter_complete_rate">{{ number_format($complete_rate, 2) }}%</h1>
                             <div class="mb-0">
-                                <span class="text-danger"> <i class="mdi mdi-arrow-bottom-right"></i> 0% </span> of calls remaining for today
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card legend-card">
-                        <div class="card-body side-card">
-                            <div class="row">
-                                <div class="col mt-0">
-                                    <h5 class="card-title">Total Calls For Today</h5>
-                                </div>
-
-                                <div class="col-auto">
-                                    <div class="avatar">
-                                        <div class="avatar-title rounded-circle ">
-                                            <i class="align-middle" data-feather="phone-call"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <h1 class="display-5 mt-1">{{ $total_call_today }}</h1>
-                            <div class="mb-0">
-                                <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i> Calls in</span> different statuses today
+                                <span id="counter_complete_rate_label"> <i class="mdi mdi-arrow-bottom-right"></i> Completion rate</span>
+                                is based on a 60-call daily target (<span id="counter_completed_target_call">{{ $completed_call }}</span>/{{ $daily_target }} status updates today)
                             </div>
                         </div>
                     </div>
@@ -96,9 +76,30 @@
                                     </div>
                                 </div>
                             </div>
-                            <h1 class="display-5 mt-1">{{ $overall_completed_call }}</h1>
+                            <h1 class="display-5 mt-1" id="counter_overall_completed_call">{{ $overall_completed_call }}</h1>
                             <div class="mb-0">
                                 <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i> Calls with status</span> COMPLETED today
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card legend-card">
+                        <div class="card-body side-card">
+                            <div class="row">
+                                <div class="col mt-0">
+                                    <h5 class="card-title">Not Completed</h5>
+                                </div>
+
+                                <div class="col-auto">
+                                    <div class="avatar">
+                                        <div class="avatar-title rounded-circle ">
+                                            <i class="align-middle" data-feather="phone-call"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <h1 class="display-5 mt-1" id="counter_total_call_today">{{ $total_call_today }}</h1>
+                            <div class="mb-0">
+                                <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i> Other Calls</span> Not Completed/Close deal
                             </div>
                         </div>
                     </div>
@@ -117,9 +118,9 @@
                                     </div>
                                 </div>
                             </div>
-                            <h1 class="display-5 mt-1">{{ $completed_call }}/60</h1>
+                            <h1 class="display-5 mt-1"><span id="counter_completed_call">{{ $completed_call }}</span>/60</h1>
                             <div class="mb-0">
-                                <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i>DONE</span> calls scheduled for today
+                                <span class="text-success"> <i class="mdi mdi-arrow-bottom-right"></i>DONE</span> calls updated today
                             </div>
                         </div>
                     </div>

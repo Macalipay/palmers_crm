@@ -9,6 +9,7 @@ var isPofoViewMode = false;
 
 var delete_module = null;
 var selectedIds = []; 
+var counterTimer = null;
 
 var filter = {
     _token: '',
@@ -40,6 +41,40 @@ function setRecordDetailsMode(viewOnly) {
     }
 }
 
+function refreshTelemarketingCounters() {
+    $.ajax({
+        url: '/' + page + '/counters',
+        method: 'GET',
+        success: function(resp) {
+            var completeRate = parseFloat(resp.complete_rate || 0);
+            $('#counter_complete_rate').text(completeRate.toFixed(2) + '%');
+            $('#counter_completed_target_call').text(resp.completed_call || 0);
+            $('#counter_total_call_today').text(resp.total_call_today || 0);
+            $('#counter_overall_completed_call').text(resp.overall_completed_call || 0);
+            $('#counter_completed_call').text(resp.completed_call || 0);
+            applyCompletionRateColor(completeRate);
+        }
+    });
+}
+
+function applyCompletionRateColor(rate) {
+    var $value = $('#counter_complete_rate');
+    var $label = $('#counter_complete_rate_label');
+    var colorClass = 'text-danger';
+
+    $value.removeClass('text-danger text-warning text-success');
+    $label.removeClass('text-danger text-warning text-success');
+
+    if (rate >= 75) {
+        colorClass = 'text-success';
+    } else if (rate >= 50) {
+        colorClass = 'text-warning';
+    }
+
+    $value.addClass(colorClass);
+    $label.addClass(colorClass);
+}
+
 $(function() {
 
     document.getElementById("sidebar").classList.add("toggled");
@@ -65,6 +100,13 @@ $(function() {
             $('#completedField').hide();
         }
     });
+
+    refreshTelemarketingCounters();
+    applyCompletionRateColor(parseFloat(($('#counter_complete_rate').text() || '0').replace('%', '')));
+    if (counterTimer) {
+        clearInterval(counterTimer);
+    }
+    counterTimer = setInterval(refreshTelemarketingCounters, 10000);
 });
 
 $(function() {
@@ -301,6 +343,7 @@ function resetDate(id) {
         data: {},
         success: function(data) {
             toastr.success("FOLLOW UP DATE", "Date Successfully updated")
+            refreshTelemarketingCounters();
         }
     });
 }
@@ -360,6 +403,7 @@ function assignedTask() {
         clear();
         $('#telemarketingModal').modal('hide');
         selectedIds = [];
+        refreshTelemarketingCounters();
 
         toastr.success("TELEMARKETING TASK", "Task Successfully Assigned")
     }).fail(function(resp) {
@@ -555,12 +599,14 @@ function yesDelete() {
         $.get('/'+page+'/destroy/' + record_id, function() {
             $('#deleteModal').modal('hide');
             $('#generated_table').DataTable().draw();
+            refreshTelemarketingCounters();
         });
     }
     else {
         $.get('/'+page+'_details/destroy/' + details_id, function() {
             $('#deleteModal').modal('hide');
             $('#generated_table_details').DataTable().draw();
+            refreshTelemarketingCounters();
         });
     }
 }
@@ -667,6 +713,7 @@ function saveRecordDetails() {
         $('#generated_table').DataTable().draw();
         $('#recordDetails').modal('hide');
         clearDetails();
+        refreshTelemarketingCounters();
     }).fail(function(resp) {
         var r = resp.responseJSON.errors;
 

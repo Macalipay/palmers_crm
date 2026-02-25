@@ -28,30 +28,70 @@ class TelemarketingController extends Controller
             ->whereHas('csd.item', function ($q) {
                 $q->where('branch_id', 2);
             })
-            ->where('sales.branch_id', '!=', 3)
             ->select('telemarketing_details.*', 'telemarketing_details.created_at', 'telemarketing_details.updated_at', 'telemarketing_details.status');
 
-        if (strtoupper($user->designation) === "SUPER ADMIN") {
-        } elseif (strtoupper($user->designation) === "TELEMARKETING HEAD") {
-            $query->where('sales.branch_id', 3);
-        } else {
-            $query->where('assigned_to', $user->id);
-        }
+        $query->where('assigned_to', $user->id);
+
+        $query->where('sales.branch_id', '!=', 3);
 
         // Metrics Queries
-        $total_active_call = (clone $query)->where('status', '!=', 'COMPLETED')->count();
+        $daily_target = 60;
         $total_backlogs = (clone $query)->where('status', '!=', 'COMPLETED')->whereDate('telemarketing_details.created_at', '<', $currentDate)->count();
-        $total_call_today = (clone $query)->whereDate('telemarketing_details.date', '=', $currentDate)->count();
-        $overall_completed_call = (clone $query)->where('status', 'COMPLETED')->whereDate('telemarketing_details.date', '=', $currentDate)->count();
-        $completed_call = (clone $query)->where('status', '!=', 'TO DO')
-            ->where('assigned_to', $user->id)
-            ->whereDate('telemarketing_details.updated_at', '=', $currentDate)
-            ->count();
+        $overall_calls_today = (clone $query)->whereDate('telemarketing_details.updated_at', '=', $currentDate)->count();
+        $overall_completed_call = (clone $query)->where('status', 'COMPLETED')->whereDate('telemarketing_details.updated_at', '=', $currentDate)->count();
+        $total_call_today = max(0, $overall_calls_today - $overall_completed_call);
+        $completedCallQuery = (clone $query)
+            ->whereDate('telemarketing_details.updated_at', '=', $currentDate);
+
+        $completed_call = $completedCallQuery->count();
+        $complete_rate = round(($completed_call / $daily_target) * 100, 2);
 
         $telemarketings = User::where('branch_id', 2)->orWhere('id', 1)->get();
 
         return view('backend.pages.telemarketing.telemarketing', compact(
-            'telemarketings', 'total_active_call', 'total_backlogs', 'total_call_today', 'completed_call', 'overall_completed_call'
+            'telemarketings', 'total_backlogs', 'total_call_today', 'completed_call', 'overall_completed_call', 'complete_rate', 'daily_target'
+        ));
+    }
+
+    public function counters()
+    {
+        $currentDate = Carbon::now()->toDateString();
+        $user = Auth::user();
+
+        $query = TelemarketingDetail::query()
+            ->join('sale_details', 'telemarketing_details.order_id', '=', 'sale_details.id')
+            ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
+            ->whereHas('csd.item', function ($q) {
+                $q->where('branch_id', 2);
+            })
+            ->where('sales.branch_id', '!=', 3);
+
+        $query->where('telemarketing_details.assigned_to', $user->id);
+
+        $daily_target = 60;
+
+        $overall_calls_today = (clone $query)
+            ->whereDate('telemarketing_details.updated_at', '=', $currentDate)
+            ->count();
+
+        $overall_completed_call = (clone $query)
+            ->where('telemarketing_details.status', 'COMPLETED')
+            ->whereDate('telemarketing_details.updated_at', '=', $currentDate)
+            ->count();
+        $total_call_today = max(0, $overall_calls_today - $overall_completed_call);
+
+        $completedCallQuery = (clone $query)
+            ->whereDate('telemarketing_details.updated_at', '=', $currentDate);
+
+        $completed_call = $completedCallQuery->count();
+        $complete_rate = round(($completed_call / $daily_target) * 100, 2);
+
+        return response()->json(compact(
+            'total_call_today',
+            'overall_completed_call',
+            'completed_call',
+            'complete_rate',
+            'daily_target'
         ));
     }
 
