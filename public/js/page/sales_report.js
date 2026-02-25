@@ -82,6 +82,41 @@ function appendTotalsToExcel(xlsx) {
     }
 }
 
+function exportAllRows(e, dt, button, config) {
+    var self = this;
+    var oldStart = dt.settings()[0]._iDisplayStart;
+
+    dt.one('preXhr', function (event, s, data) {
+        data.start = 0;
+        data.length = 2147483647;
+
+        dt.one('preDraw', function (event, settings) {
+            var buttonClass = button[0].className.split(' ')[0];
+
+            if (buttonClass.indexOf('buttons-excel') >= 0) {
+                $.fn.dataTable.ext.buttons.excelHtml5.action.call(self, e, dt, button, config);
+            } else if (buttonClass.indexOf('buttons-csv') >= 0) {
+                $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button, config);
+            } else if (buttonClass.indexOf('buttons-pdf') >= 0) {
+                $.fn.dataTable.ext.buttons.pdfHtml5.action.call(self, e, dt, button, config);
+            } else if (buttonClass.indexOf('buttons-print') >= 0) {
+                $.fn.dataTable.ext.buttons.print.action.call(self, e, dt, button, config);
+            }
+
+            dt.one('preXhr', function (event, s, data) {
+                settings._iDisplayStart = oldStart;
+                data.start = oldStart;
+                data.length = settings._iDisplayLength;
+            });
+
+            setTimeout(dt.ajax.reload, 0, false);
+            return false;
+        });
+    });
+
+    dt.ajax.reload();
+}
+
 $(function () {
     initializeSearchableDropdowns();
     loadSummary();
@@ -99,6 +134,7 @@ $(function () {
                 extend: 'excelHtml5',
                 text: 'Excel',
                 className: 'btn btn-success btn-sm',
+                action: exportAllRows,
                 customize: function (xlsx) {
                     appendTotalsToExcel(xlsx);
                 }
@@ -107,6 +143,7 @@ $(function () {
                 extend: 'csvHtml5',
                 text: 'CSV',
                 className: 'btn btn-info btn-sm',
+                action: exportAllRows,
                 customize: function (csv) {
                     var summary = getSummaryValues();
                     return csv + '\n\nTotal Transactions,' + summary.totalTransactions +
@@ -119,12 +156,14 @@ $(function () {
                 className: 'btn btn-danger btn-sm',
                 orientation: 'landscape',
                 pageSize: 'A4',
+                action: exportAllRows,
                 messageBottom: function () { return buildExportSummary(); }
             },
             {
                 extend: 'print',
                 text: 'Print Table',
                 className: 'btn btn-secondary btn-sm',
+                action: exportAllRows,
                 messageBottom: function () { return buildExportSummary(); }
             }
         ],
