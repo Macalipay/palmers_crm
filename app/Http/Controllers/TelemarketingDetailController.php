@@ -126,7 +126,13 @@ class TelemarketingDetailController extends Controller
         $telemarketing = TelemarketingDetail::findOrFail($id);
         $previousStatus = $telemarketing->status;
 
-        $payload = $request->all();
+        $payload = $request->only([
+            'new_order_id',
+            'total_amount',
+            'status',
+            'call_duration',
+            'remarks',
+        ]);
         $payload['assigned_to'] = Auth::user()->id;
 
         // Guard against schema drift on environments where newer migrations are not yet applied.
@@ -138,17 +144,23 @@ class TelemarketingDetailController extends Controller
             unset($payload['assigned_date']);
         }
 
+        // Guard against schema drift on environments where the column does not exist yet.
+        if (!Schema::hasColumn('telemarketing_details', 'new_order_id')) {
+            unset($payload['new_order_id']);
+        }
+
         $updated = $telemarketing->update($payload);
 
         if ($updated) {
-            $sale_detail = SaleDetail::where('id', $telemarketing->order_id)->first();
-            $sale = Sale::where('id', $sale_detail->sale_id)->first();
             $newStatus = $request->status;
             $statusChanged = $previousStatus !== $newStatus;
 
             if ($statusChanged) {
+                $sale_detail = SaleDetail::where('id', $telemarketing->order_id)->first();
+                $sale = $sale_detail ? Sale::where('id', $sale_detail->sale_id)->first() : null;
+
                 $call_log = [
-                    'sale_id' => $sale->id,
+                    'sale_id' => $sale->id ?? null,
                     'telemarketing_detail_id' => $telemarketing->id,
                     'new_order_id' => $request->new_order_id,
                     'total_amount' => $request->total_amount,
@@ -162,7 +174,7 @@ class TelemarketingDetailController extends Controller
 
                 Log::info('Telemarketing status changed', [
                     'telemarketing_detail_id' => $telemarketing->id,
-                    'sale_id' => $sale->id,
+                    'sale_id' => $sale->id ?? null,
                     'changed_by' => Auth::user()->id,
                     'status_from' => $previousStatus,
                     'status_to' => $newStatus,

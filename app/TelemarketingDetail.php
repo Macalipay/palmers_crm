@@ -14,6 +14,7 @@ class TelemarketingDetail extends Model
         'date',
         'task',
         'order_id',
+        'new_order_id',
         'total_amount',
         'description',
         'lead_status',

@@ -733,18 +733,17 @@ function saveRecordDetails() {
         refreshTelemarketingCounters();
         toastr.success("RECORD UPDATED", (resp && resp.message) ? resp.message : "Update saved successfully.");
     }).fail(function(resp) {
-        var responseJson = resp.responseJSON || {};
-        var r = responseJson.errors || {};
-        var message = responseJson.message || "Failed to save record details.";
+        var r = resp.responseJSON && resp.responseJSON.errors ? resp.responseJSON.errors : null;
 
         $('.form-control').removeClass('required');
-        $.each(r, function(i, v) {
-            $('#' + i).addClass('required');
-        });
-
-        toastr.error("SAVE FAILED", message);
-    }).always(function() {
-        $saveBtn.prop('disabled', false);
+        if (r) {
+            $.each(r, function(i,v) {
+                $('#' + i).addClass('required');
+            });
+        } else {
+            var message = (resp.responseJSON && (resp.responseJSON.error || resp.responseJSON.message)) ? (resp.responseJSON.error || resp.responseJSON.message) : 'Unable to save changes.';
+            toastr.error('SAVE ERROR', message);
+        }
     });
 }
 
