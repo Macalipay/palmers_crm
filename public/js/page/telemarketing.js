@@ -729,12 +729,17 @@ function saveRecordDetails() {
         clearDetails();
         refreshTelemarketingCounters();
     }).fail(function(resp) {
-        var r = resp.responseJSON.errors;
+        var r = resp.responseJSON && resp.responseJSON.errors ? resp.responseJSON.errors : null;
 
         $('.form-control').removeClass('required');
-        $.each(r, function(i,v) {
-            $('#' + i).addClass('required');
-        });
+        if (r) {
+            $.each(r, function(i,v) {
+                $('#' + i).addClass('required');
+            });
+        } else {
+            var message = (resp.responseJSON && (resp.responseJSON.error || resp.responseJSON.message)) ? (resp.responseJSON.error || resp.responseJSON.message) : 'Unable to save changes.';
+            toastr.error('SAVE ERROR', message);
+        }
     });
 }
 
