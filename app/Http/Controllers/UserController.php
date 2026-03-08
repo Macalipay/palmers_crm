@@ -11,6 +11,9 @@ use App\ModelHasRoles;
 use App\TelemarketingDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use App\Rules\MatchOldPassword;
 
 class UserController extends Controller
@@ -117,20 +120,118 @@ class UserController extends Controller
 
     public function changePicture(Request $request)
     {
-        $request->validate([
-            'picture' => 'required',
+        $validator = Validator::make($request->all(), [
+            'picture' => 'required|file|max:5120',
         ]);
-        $file = $request->picture->getClientOriginalName();
-        $filename = pathinfo($file, PATHINFO_FILENAME);
 
-        $imageName = $filename.time().'.'.$request->picture->extension();  
-        $picture = $request->picture->move(public_path('images/profile'), $imageName);
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator, 'changePhoto')->withInput();
+        }
 
-        $requestData = $request->all();
-        $requestData['picture'] = $imageName;
+        try {
+            $userId = Auth::id();
+            $file = $request->file('picture');
+            $destination = public_path('images/profile');
 
-        User::find($request->user_id)->update(['picture'=> $imageName]);
-        
-        return redirect()->back()->with('success','Successfully Updated');
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $extension = strtolower((string) $file->getClientOriginalExtension());
+            if (!in_array($extension, $allowedExtensions)) {
+                return redirect()->back()->withErrors([
+                    'picture' => 'Invalid file type. Allowed: JPG, JPEG, PNG, GIF, WEBP.',
+                ], 'changePhoto');
+            }
+
+            if (@getimagesize($file->getRealPath()) === false) {
+                return redirect()->back()->withErrors([
+                    'picture' => 'The selected file is not a valid image.',
+                ], 'changePhoto');
+            }
+
+            if (!is_dir($destination)) {
+                mkdir($destination, 0755, true);
+            }
+
+            if (!is_writable($destination)) {
+                return redirect()->back()->withErrors([
+                    'picture' => 'Profile image folder is not writable.',
+                ], 'changePhoto');
+            }
+
+            // Save profile image as a normalized square to avoid stretched/crushed avatars.
+            $imageName = 'profile_'.$userId.'_'.time().'_'.Str::random(6).'.jpg';
+            $imagePath = $destination.DIRECTORY_SEPARATOR.$imageName;
+            $stored = false;
+
+            $imageInfo = @getimagesize($file->getRealPath());
+            if ($imageInfo && function_exists('imagecreatetruecolor')) {
+                $source = null;
+                switch ($imageInfo['mime']) {
+                    case 'image/jpeg':
+                        $source = @imagecreatefromjpeg($file->getRealPath());
+                        break;
+                    case 'image/png':
+                        $source = @imagecreatefrompng($file->getRealPath());
+                        break;
+                    case 'image/gif':
+                        $source = @imagecreatefromgif($file->getRealPath());
+                        break;
+                    case 'image/webp':
+                        if (function_exists('imagecreatefromwebp')) {
+                            $source = @imagecreatefromwebp($file->getRealPath());
+                        }
+                        break;
+                }
+
+                if ($source) {
+                    $srcWidth = imagesx($source);
+                    $srcHeight = imagesy($source);
+                    $side = min($srcWidth, $srcHeight);
+                    $srcX = (int) (($srcWidth - $side) / 2);
+                    $srcY = (int) (($srcHeight - $side) / 2);
+
+                    $targetSize = 300;
+                    $target = imagecreatetruecolor($targetSize, $targetSize);
+
+                    // White background for compatibility with non-transparent formats.
+                    $white = imagecolorallocate($target, 255, 255, 255);
+                    imagefill($target, 0, 0, $white);
+
+                    imagecopyresampled(
+                        $target,
+                        $source,
+                        0,
+                        0,
+                        $srcX,
+                        $srcY,
+                        $targetSize,
+                        $targetSize,
+                        $side,
+                        $side
+                    );
+
+                    $stored = imagejpeg($target, $imagePath, 90);
+                    imagedestroy($target);
+                    imagedestroy($source);
+                }
+            }
+
+            if (!$stored) {
+                $imageName = 'profile_'.$userId.'_'.time().'_'.Str::random(6).'.'.$extension;
+                $file->move($destination, $imageName);
+            }
+
+            User::where('id', $userId)->update(['picture' => $imageName]);
+
+            return redirect()->back()->with('photo_success', 'Profile picture updated successfully.');
+        } catch (\Throwable $e) {
+            Log::error('Profile picture upload failed', [
+                'user_id' => Auth::id(),
+                'message' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->withErrors([
+                'picture' => 'Unable to upload profile picture. Please try again.',
+            ], 'changePhoto');
+        }
     }
 }

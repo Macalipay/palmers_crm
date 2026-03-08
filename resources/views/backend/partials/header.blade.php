@@ -1,4 +1,12 @@
 <nav class="navbar navbar-expand navbar-theme">
+    @php
+        $profilePicture = Auth::user()->picture;
+        $profileExt = strtolower(pathinfo((string) $profilePicture, PATHINFO_EXTENSION));
+        $isProfileImage = $profilePicture
+            && in_array($profileExt, ['jpg', 'jpeg', 'png', 'gif', 'webp'])
+            && file_exists(public_path('images/profile/' . $profilePicture));
+        $profileSrc = '/images/profile/' . ($isProfileImage ? $profilePicture : 'default.jpg');
+    @endphp
     <a class="sidebar-toggle d-flex mr-2">
         <i class="hamburger align-self-center"></i>
         </a>
@@ -9,7 +17,7 @@
             <li class="nav-item dropdown ml-lg-2">
                 <a class="nav-link dropdown-toggle position-relative" href="#" id="userDropdown" data-toggle="dropdown">
                     <div class="profile-card">
-                        <img src="/images/profile/{{Auth::user()->picture}}" class="img-fluid rounded-circle mb-2" alt="Voter's Picture" width="10"/>
+                        <img src="{{ $profileSrc }}" class="profile-avatar" alt="Profile Picture"/>
                         <div class="font-weight-bold user-name"> {{ Auth::user()->name }}</div>
                     </div>
                 </a>

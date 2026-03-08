@@ -25,6 +25,7 @@ class TelemarketingController extends Controller
         $query = TelemarketingDetail::with(['user', 'telemarketing', 'telemarketing.company', 'csd', 'csd.item'])
             ->join('sale_details', 'telemarketing_details.order_id', '=', 'sale_details.id')
             ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
+            ->join('telemarketings', 'telemarketing_details.telemarketing_id', '=', 'telemarketings.id')
             ->whereHas('csd.item', function ($q) {
                 $q->where('branch_id', 2);
             })
@@ -36,14 +37,39 @@ class TelemarketingController extends Controller
 
         // Metrics Queries
         $daily_target = 60;
-        $total_backlogs = (clone $query)->where('status', '!=', 'COMPLETED')->whereDate('telemarketing_details.created_at', '<', $currentDate)->count();
-        $overall_calls_today = (clone $query)->whereDate('telemarketing_details.updated_at', '=', $currentDate)->count();
-        $overall_completed_call = (clone $query)->where('status', 'COMPLETED')->whereDate('telemarketing_details.updated_at', '=', $currentDate)->count();
-        $total_call_today = max(0, $overall_calls_today - $overall_completed_call);
+        $total_backlogs = (clone $query)
+            ->where('status', '!=', 'COMPLETED')
+            ->whereDate('telemarketing_details.created_at', '<', $currentDate)
+            ->select('telemarketings.company_id')
+            ->distinct()
+            ->count('telemarketings.company_id');
+
+        $overall_calls_today = (clone $query)
+            ->whereDate('telemarketing_details.updated_at', '=', $currentDate)
+            ->select('telemarketings.company_id')
+            ->distinct()
+            ->count('telemarketings.company_id');
+
+        $overall_completed_call = (clone $query)
+            ->where('status', 'COMPLETED')
+            ->whereDate('telemarketing_details.updated_at', '=', $currentDate)
+            ->select('telemarketings.company_id')
+            ->distinct()
+            ->count('telemarketings.company_id');
+
+        $total_call_today = (clone $query)
+            ->where('status', '!=', 'COMPLETED')
+            ->whereDate('telemarketing_details.updated_at', '=', $currentDate)
+            ->select('telemarketings.company_id')
+            ->distinct()
+            ->count('telemarketings.company_id');
         $completedCallQuery = (clone $query)
             ->whereDate('telemarketing_details.updated_at', '=', $currentDate);
 
-        $completed_call = $completedCallQuery->count();
+        $completed_call = $completedCallQuery
+            ->select('telemarketings.company_id')
+            ->distinct()
+            ->count('telemarketings.company_id');
         $complete_rate = round(($completed_call / $daily_target) * 100, 2);
 
         $telemarketings = User::where('branch_id', 2)->orWhere('id', 1)->get();
@@ -61,6 +87,7 @@ class TelemarketingController extends Controller
         $query = TelemarketingDetail::query()
             ->join('sale_details', 'telemarketing_details.order_id', '=', 'sale_details.id')
             ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
+            ->join('telemarketings', 'telemarketing_details.telemarketing_id', '=', 'telemarketings.id')
             ->whereHas('csd.item', function ($q) {
                 $q->where('branch_id', 2);
             })
@@ -72,18 +99,30 @@ class TelemarketingController extends Controller
 
         $overall_calls_today = (clone $query)
             ->whereDate('telemarketing_details.updated_at', '=', $currentDate)
-            ->count();
+            ->select('telemarketings.company_id')
+            ->distinct()
+            ->count('telemarketings.company_id');
 
         $overall_completed_call = (clone $query)
             ->where('telemarketing_details.status', 'COMPLETED')
             ->whereDate('telemarketing_details.updated_at', '=', $currentDate)
-            ->count();
-        $total_call_today = max(0, $overall_calls_today - $overall_completed_call);
+            ->select('telemarketings.company_id')
+            ->distinct()
+            ->count('telemarketings.company_id');
+        $total_call_today = (clone $query)
+            ->where('telemarketing_details.status', '!=', 'COMPLETED')
+            ->whereDate('telemarketing_details.updated_at', '=', $currentDate)
+            ->select('telemarketings.company_id')
+            ->distinct()
+            ->count('telemarketings.company_id');
 
         $completedCallQuery = (clone $query)
             ->whereDate('telemarketing_details.updated_at', '=', $currentDate);
 
-        $completed_call = $completedCallQuery->count();
+        $completed_call = $completedCallQuery
+            ->select('telemarketings.company_id')
+            ->distinct()
+            ->count('telemarketings.company_id');
         $complete_rate = round(($completed_call / $daily_target) * 100, 2);
 
         return response()->json(compact(
@@ -93,6 +132,40 @@ class TelemarketingController extends Controller
             'complete_rate',
             'daily_target'
         ));
+    }
+
+    public function counterRecords($type)
+    {
+        if (!request()->ajax()) {
+            return response()->json(['error' => 'Invalid request'], 400);
+        }
+
+        $currentDate = Carbon::now()->toDateString();
+        $user = Auth::user();
+
+        $query = TelemarketingDetail::with(['user', 'telemarketing', 'telemarketing.company', 'csd', 'csd.item'])
+            ->join('sale_details', 'telemarketing_details.order_id', '=', 'sale_details.id')
+            ->join('sales', 'sale_details.sale_id', '=', 'sales.id')
+            ->whereHas('csd.item', function ($q) {
+                $q->where('branch_id', 2);
+            })
+            ->where('telemarketing_details.assigned_to', $user->id)
+            ->where('sales.branch_id', '!=', 3)
+            ->whereDate('telemarketing_details.updated_at', '=', $currentDate)
+            ->select('telemarketing_details.*')
+            ->orderBy('telemarketing_details.updated_at', 'desc');
+
+        if ($type === 'completed') {
+            $query->where('telemarketing_details.status', 'COMPLETED');
+        } elseif ($type === 'not_completed') {
+            $query->where('telemarketing_details.status', '!=', 'COMPLETED');
+        } elseif ($type !== 'done') {
+            return response()->json(['error' => 'Invalid counter type'], 400);
+        }
+
+        return DataTables::eloquent($query)
+            ->addIndexColumn()
+            ->make(true);
     }
 
     
@@ -109,7 +182,7 @@ class TelemarketingController extends Controller
         $total_amount = TelemarketingDetail::where('assigned_to', $userId)
                             ->where('status', 'COMPLETED')
                             ->sum('total_amount');
-        $formatted_total_amount = '???' . number_format($total_amount, 2);
+        $formatted_total_amount = 'PHP ' . number_format($total_amount, 2);
     
         $user_todo_call = $statusCounts['TO DO'] ?? 0;
         $user_cancelled_call = $statusCounts['CANCELLED'] ?? 0;
@@ -223,7 +296,7 @@ class TelemarketingController extends Controller
                         ->where('status', 'COMPLETED')
                         ->whereBetween('date', [$start_date, $end_date])
                         ->sum('total_amount');
-        $formatted_total_amount = '???' . number_format($total_amount, 2);
+        $formatted_total_amount = 'PHP ' . number_format($total_amount, 2);
 
         $total_active_call = TelemarketingDetail::where('assigned_to', $user)->whereBetween('date', [$start_date, $end_date])->count();
         $total_backlogs = TelemarketingDetail::where('assigned_to', $user)->where('status', '!=', 'COMPLETED')->whereBetween('date', [$start_date, $end_date])->count();

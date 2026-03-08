@@ -276,6 +276,7 @@ Route::group(['prefix' => 'telemarketing', 'middleware' => ['auth']], function (
     Route::get          ('/getDashboard_range/{user}/{start}/{end}',  'TelemarketingController@getDashboard_range'                            )->name('get');
     Route::get          ('/status_range/{id}/{start}/{end}',  'TelemarketingController@status_range'                            )->name('get');
     Route::get          ('/get',                         'TelemarketingController@get'                            )->name('get');
+    Route::get          ('/counter-records/{type}',      'TelemarketingController@counterRecords'                 )->name('counter_records');
     Route::get          ('/counters',                    'TelemarketingController@counters'                       )->name('counters');
     Route::post         ('/save',                        'TelemarketingController@save'                           )->name('save');
     Route::post         ('/assign',                      'TelemarketingController@assignedTask'                   )->name('save');
@@ -367,9 +368,11 @@ Route::group(['prefix' => 'reports', 'middleware' => ['auth']], function (){
     Route::get          ('/sales',                       'SalesReportController@index'                                 )->name('sales_report');
     Route::post         ('/sales/data',                  'SalesReportController@data'                                  )->name('sales_report_data');
     Route::post         ('/sales/summary',               'SalesReportController@summary'                               )->name('sales_report_summary');
+    Route::get          ('/sales/export',                'SalesReportController@export'                                )->name('sales_report_export');
     Route::get          ('/telemarketing',               'TelemarketingReportController@index'                         )->name('telemarketing_report');
     Route::post         ('/telemarketing/data',          'TelemarketingReportController@data'                          )->name('telemarketing_report_data');
     Route::post         ('/telemarketing/summary',       'TelemarketingReportController@summary'                       )->name('telemarketing_report_summary');
+    Route::get          ('/telemarketing/export',        'TelemarketingReportController@export'                        )->name('telemarketing_report_export');
 });
 
 Route::group(['prefix' => 'annual', 'middleware' => ['auth']], function (){

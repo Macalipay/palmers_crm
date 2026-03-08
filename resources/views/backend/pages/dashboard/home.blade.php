@@ -4,6 +4,14 @@
 @extends('backend.master.template')
 @section('content')
 <main class="content">
+    @php
+        $profilePicture = Auth::user()->picture;
+        $profileExt = strtolower(pathinfo((string) $profilePicture, PATHINFO_EXTENSION));
+        $isProfileImage = $profilePicture
+            && in_array($profileExt, ['jpg', 'jpeg', 'png', 'gif', 'webp'])
+            && file_exists(public_path('images/profile/' . $profilePicture));
+        $profileSrc = '/images/profile/' . ($isProfileImage ? $profilePicture : 'default.jpg');
+    @endphp
     
     <div class="row">
         <div class="col-12">
@@ -18,7 +26,7 @@
             <div>
                 <div id="candidate-info">
                     <div class="candidate-pic">
-                        <img src="/images/profile/{{Auth::user()->picture}}" class="img-fluid rounded-circle mb-2" alt="Voter's Picture" width="100"/>
+                        <img src="{{ $profileSrc }}" class="profile-avatar-lg" alt="Profile Picture"/>
                     </div>
                     <div class="candidate-details">
                         <div class="c-name">{{Auth::user()->name}}</div>

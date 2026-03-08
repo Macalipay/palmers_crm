@@ -19,6 +19,82 @@ function collectFilters() {
     return data;
 }
 
+function buildExportUrl(format) {
+    var params = $('#sales-report-filter').serializeArray()
+        .filter(function (item) {
+            return item.value !== null && item.value !== '';
+        });
+
+    params.push({ name: 'format', value: format });
+
+    return '/reports/sales/export?' + $.param(params);
+}
+
+function fetchExportData(done) {
+    $.get(buildExportUrl('json'))
+        .done(function (response) {
+            done(response || { headings: [], rows: [] });
+        })
+        .fail(function (xhr) {
+            var message = (xhr.responseJSON && xhr.responseJSON.message)
+                ? xhr.responseJSON.message
+                : 'Failed to load all records for export.';
+            alert(message);
+        });
+}
+
+function printFullSalesTable(data) {
+    var headings = data.headings || [];
+    var rows = data.rows || [];
+    var tableHtml = '<table border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse;width:100%;font-size:11px;"><thead><tr>';
+
+    headings.forEach(function (heading) {
+        tableHtml += '<th>' + heading + '</th>';
+    });
+    tableHtml += '</tr></thead><tbody>';
+
+    rows.forEach(function (row) {
+        tableHtml += '<tr>';
+        row.forEach(function (cell) {
+            tableHtml += '<td>' + (cell === null ? '' : cell) + '</td>';
+        });
+        tableHtml += '</tr>';
+    });
+
+    tableHtml += '</tbody></table>';
+
+    var printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        return;
+    }
+    printWindow.document.write('<html><head><title>Sales Report</title></head><body>');
+    printWindow.document.write('<h3>Sales Report</h3>');
+    printWindow.document.write('<div style="margin-bottom:8px;white-space:pre-line;">' + buildExportSummary() + '</div>');
+    printWindow.document.write(tableHtml);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+}
+
+function copyTextToClipboard(text, onSuccess) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(onSuccess);
+        return;
+    }
+
+    var textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    onSuccess();
+}
+
 function initializeSearchableDropdowns() {
     if (!$.fn.select2) {
         return;
@@ -88,7 +164,7 @@ function exportAllRows(e, dt, button, config) {
 
     dt.one('preXhr', function (event, s, data) {
         data.start = 0;
-        data.length = 2147483647;
+        data.length = -1;
         data.export_all = 1;
 
         dt.one('preDraw', function (event, settings) {
@@ -137,23 +213,17 @@ $(function () {
         dom: 'Bfrtip',
         buttons: [
             {
-                extend: 'excelHtml5',
                 text: 'Excel',
                 className: 'btn btn-success btn-sm',
-                action: exportAllRows,
-                customize: function (xlsx) {
-                    appendTotalsToExcel(xlsx);
+                action: function () {
+                    window.location.href = buildExportUrl('xlsx');
                 }
             },
             {
-                extend: 'csvHtml5',
                 text: 'CSV',
                 className: 'btn btn-info btn-sm',
-                action: exportAllRows,
-                customize: function (csv) {
-                    var summary = getSummaryValues();
-                    return csv + '\n\nTotal Transactions,' + summary.totalTransactions +
-                        '\nTotal Sales Amount,' + summary.totalSales;
+                action: function () {
+                    window.location.href = buildExportUrl('csv');
                 }
             },
             {
@@ -162,15 +232,67 @@ $(function () {
                 className: 'btn btn-danger btn-sm',
                 orientation: 'landscape',
                 pageSize: 'A4',
-                action: exportAllRows,
-                messageBottom: function () { return buildExportSummary(); }
+                action: function () {
+                    fetchExportData(function (data) {
+                        var body = [];
+                        body.push(data.headings || []);
+                        (data.rows || []).forEach(function (row) {
+                            body.push(row);
+                        });
+
+                        var docDefinition = {
+                            pageOrientation: 'landscape',
+                            pageSize: 'A4',
+                            content: [
+                                { text: 'Sales Report', style: 'title' },
+                                { text: buildExportSummary(), margin: [0, 0, 0, 8] },
+                                {
+                                    table: {
+                                        headerRows: 1,
+                                        body: body
+                                    },
+                                    layout: 'lightHorizontalLines'
+                                }
+                            ],
+                            styles: {
+                                title: { fontSize: 14, bold: true, margin: [0, 0, 0, 8] }
+                            },
+                            defaultStyle: {
+                                fontSize: 7
+                            }
+                        };
+
+                        pdfMake.createPdf(docDefinition).download('sales_report_' + moment().format('YYYYMMDD_HHmmss') + '.pdf');
+                    });
+                }
             },
             {
-                extend: 'print',
+                text: 'Copy',
+                className: 'btn btn-primary btn-sm',
+                action: function () {
+                    fetchExportData(function (data) {
+                        var lines = [];
+                        lines.push((data.headings || []).join('\t'));
+                        (data.rows || []).forEach(function (row) {
+                            lines.push(row.join('\t'));
+                        });
+
+                        copyTextToClipboard(lines.join('\n'), function () {
+                            if (window.toastr) {
+                                toastr.success('Copied', 'All filtered records copied.');
+                            }
+                        });
+                    });
+                }
+            },
+            {
                 text: 'Print Table',
                 className: 'btn btn-secondary btn-sm',
-                action: exportAllRows,
-                messageBottom: function () { return buildExportSummary(); }
+                action: function () {
+                    fetchExportData(function (data) {
+                        printFullSalesTable(data);
+                    });
+                }
             }
         ],
         ajax: {
