@@ -332,10 +332,16 @@ Route::group(['prefix' => 'telemarketing_details', 'middleware' => ['auth']], fu
     Route::get          ('/get/{id}',                    'TelemarketingDetailController@get'                            )->name('get');
     Route::get          ('/company-pofo/{companyId}',    'TelemarketingDetailController@companyPofo'                    )->name('company_pofo');
     Route::post         ('/save',                        'TelemarketingDetailController@save'                           )->name('save');
+    Route::post         ('/report',                      'TelemarketingDetailController@report'                         )->name('report');
     Route::get          ('/edit/{id}',                   'TelemarketingDetailController@edit'                           )->name('reason');
     Route::post         ('/update/{id}',                 'TelemarketingDetailController@update'                         )->name('update');
     Route::get          ('/destroy/{id}',                'TelemarketingDetailController@destroy'                        )->name('destroy');
     Route::get          ('/list/{id}',                   'TelemarketingDetailController@list'                           )->name('list');
+});
+
+Route::group(['prefix' => 'telemarketing_item_reports', 'middleware' => ['auth']], function (){
+    Route::get          ('/',                            'TelemarketingDetailReportController@index'                    )->name('page');
+    Route::get          ('/get',                         'TelemarketingDetailReportController@get'                      )->name('get');
 });
 
 Route::group(['prefix' => 'home', 'middleware' => ['auth']], function (){

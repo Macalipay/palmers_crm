@@ -8,6 +8,7 @@ use App\User;
 use App\Sale;
 use App\SaleDetail;
 use App\TelemarketingCallLog;
+use App\TelemarketingDetailReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -211,6 +212,28 @@ class TelemarketingDetailController extends Controller
         }
 
         return response()->json(['error' => 'Failed to update telemarketing detail.'], 500);
+    }
+
+    public function report(Request $request)
+    {
+        $validated = $request->validate([
+            'telemarketing_detail_id' => ['required', 'exists:telemarketing_details,id'],
+            'remarks' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $report = TelemarketingDetailReport::create([
+            'telemarketing_detail_id' => $validated['telemarketing_detail_id'],
+            'reported_by' => Auth::user()->id,
+            'remarks' => $validated['remarks'],
+            'status' => 'OPEN',
+            'created_by' => Auth::user()->id,
+            'updated_by' => Auth::user()->id,
+        ]);
+
+        return response()->json([
+            'message' => 'Report submitted successfully.',
+            'report_id' => $report->id,
+        ]);
     }
 
     private function resolveTargetDetails(TelemarketingDetail $telemarketing, bool $processAllPo): Collection

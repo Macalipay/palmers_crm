@@ -48,22 +48,6 @@
                     </a>
                 </li>
 
-            @role('SUPER ADMIN|Super Admin')
-                <li class="sidebar-header">
-                    Reports
-                </li>
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="{{ url('reports/sales') }}">
-                        <i class="align-middle mr-2 fas fa-fw fa-file-alt"></i> <span class="align-middle">Sales Report</span>
-                    </a>
-                </li>
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="{{ url('reports/telemarketing') }}">
-                        <i class="align-middle mr-2 fas fa-fw fa-phone"></i> <span class="align-middle">Telemarketing Report</span>
-                    </a>
-                </li>
-            @endrole
-
             <li class="sidebar-header">
                 Transaction
             </li>
@@ -124,6 +108,21 @@
                 </li>
                 @endrole
 
+            @role('SUPER ADMIN|Super Admin')
+                <li class="sidebar-header">
+                    Reports
+                </li>
+                <li class="sidebar-item">
+                    <a href="#all_reports" data-toggle="collapse" class="sidebar-link collapsed">
+                        <i class="align-middle mr-2 fas fa-fw fa-chart-bar"></i> <span class="align-middle">All Reports</span>
+                    </a>
+                    <ul id="all_reports" class="sidebar-dropdown list-unstyled collapse " data-parent="#sidebar">
+                        <li class="sidebar-item"><a class="sidebar-link" href="{{ url('reports/sales') }}">Sales Report</a></li>
+                        <li class="sidebar-item"><a class="sidebar-link" href="{{ url('reports/telemarketing') }}">Telemarketing Report</a></li>
+                    </ul>
+                </li>
+            @endrole
+
             <li class="sidebar-header">
                 Setup
             </li>
@@ -156,6 +155,11 @@
                 <li class="sidebar-item">
                     <a class="sidebar-link" href="{{ url('activity_logs') }}">
                         <i class="align-middle mr-2 fa fa-fw fa-file-signature" style="color:#153d77"></i> <span class="align-middle">Activity Logs</span>
+                    </a>
+                </li>
+                <li class="sidebar-item">
+                    <a class="sidebar-link" href="{{ url('telemarketing_item_reports') }}">
+                        <i class="align-middle mr-2 fas fa-fw fa-flag" style="color:#c82333"></i> <span class="align-middle">Telemarketing Reports</span>
                     </a>
                 </li>
             @endrole

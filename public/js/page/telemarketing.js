@@ -11,6 +11,7 @@ var delete_module = null;
 var selectedIds = []; 
 var counterTimer = null;
 var sessionRedirecting = false;
+var reportRecordContext = {};
 
 var filter = {
     _token: '',
@@ -22,6 +23,32 @@ var filter = {
     contact: '',
     calls: '',
 };
+
+function handleSessionExpiry(xhr) {
+    if (!xhr || sessionRedirecting) {
+        return false;
+    }
+
+    var responseText = xhr.responseText || '';
+    var isSessionExpired = xhr.status === 401 || xhr.status === 403 || xhr.status === 419;
+    var redirectedToLogin = typeof responseText === 'string' && responseText.indexOf('<title>Login') !== -1;
+
+    if (!isSessionExpired && !redirectedToLogin) {
+        return false;
+    }
+
+    sessionRedirecting = true;
+
+    if (typeof toastr !== 'undefined') {
+        toastr.error('SESSION EXPIRED', 'Your session has expired. Redirecting to login.');
+    }
+
+    setTimeout(function() {
+        window.location.href = '/';
+    }, 800);
+
+    return true;
+}
 
 function updateProcessAllPoUI(relatedDetailCount, viewOnly) {
     var hasMultipleItems = (relatedDetailCount || 1) > 1;
@@ -117,7 +144,8 @@ function getMainTableColumns() {
             return '<input type="checkbox" class="select-row" data-id="' + row.id + '">';
         }},
         { data: null, title: 'Action', searchable: false, orderable: false, render: function(data, type, row, meta) {
-            return '<a href="#" onclick="edit(' + row.id + ')"><i class="align-middle fas fa-fw fa-tasks"></i></a>';
+            return '<a href="#" onclick="edit(' + row.id + ')"><i class="align-middle fas fa-fw fa-tasks"></i></a>' +
+                '<a href="#" class="report-action" title="Report this item" onclick="openReportModal(' + row.id + ', this)"><i class="align-middle fas fa-fw fa-flag"></i></a>';
         }},
         { data: 'date', title: 'Date',
             render: function(data) {
@@ -197,6 +225,111 @@ function renderMainTable(ajaxConfig, serverSideMode) {
                 }
             });
         }
+    });
+}
+
+function escapeHtml(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    return $('<div>').text(value).html();
+}
+
+function openReportModal(id, element) {
+    var rowData = null;
+    var $row = element ? $(element).closest('tr') : $();
+    var table = $.fn.DataTable.isDataTable('#generated_table') ? $('#generated_table').DataTable() : null;
+
+    if ($row.hasClass('child')) {
+        $row = $row.prev();
+    }
+
+    if ($row.length && table) {
+        rowData = table.row($row).data();
+    }
+
+    if (!rowData && id && $('#telemarketing_detail_id').val() == id) {
+        rowData = reportRecordContext && Object.keys(reportRecordContext).length ? reportRecordContext : {
+            status: $('#status').val() || '--',
+            date: $('#detail_date').text() || '--',
+            description: $('#detail_description').text() || '--',
+            user: {
+                name: '--'
+            },
+            telemarketing: {
+                company: {
+                    company_name: $('#detail_company_name').text() || '--',
+                    contact_person: $('#detail_contact_person').text() || '--'
+                }
+            }
+        };
+    }
+
+    reportRecordContext = rowData || {};
+
+    var companyName = rowData && rowData.telemarketing && rowData.telemarketing.company ? rowData.telemarketing.company.company_name : '--';
+    var contactPerson = rowData && rowData.telemarketing && rowData.telemarketing.company ? rowData.telemarketing.company.contact_person : '--';
+    var status = rowData && rowData.status ? rowData.status : '--';
+    var description = rowData && rowData.description ? rowData.description.replace("CUSTOMER ORDERED", "").trim() : '--';
+    var assignedTo = rowData && rowData.user && rowData.user.name ? rowData.user.name : '--';
+    var followUpDate = rowData && rowData.date ? moment(rowData.date).format('MMM D, YYYY') : '--';
+
+    $('#report_telemarketing_detail_id').val(id);
+    $('#report_remarks').val('');
+    $('#report_record_context').html(
+        '<strong>Company:</strong> ' + escapeHtml(companyName) + '<br>' +
+        '<strong>Contact:</strong> ' + escapeHtml(contactPerson) + '<br>' +
+        '<strong>Status:</strong> ' + escapeHtml(status) + '<br>' +
+        '<strong>Assigned To:</strong> ' + escapeHtml(assignedTo) + '<br>' +
+        '<strong>Follow Up Date:</strong> ' + escapeHtml(followUpDate) + '<br>' +
+        '<strong>Description:</strong> ' + escapeHtml(description)
+    );
+
+    $('#reportIssueModal').modal('show');
+}
+
+function reportCurrentTelemarketingDetail() {
+    var detailId = $('#telemarketing_detail_id').val();
+
+    if (!detailId) {
+        toastr.warning('REPORT ITEM', 'Open a telemarketing item first.');
+        return;
+    }
+
+    openReportModal(detailId, null);
+}
+
+function submitTelemarketingReport() {
+    var remarks = $('#report_remarks').val().trim();
+    var detailId = $('#report_telemarketing_detail_id').val();
+    var $submitBtn = $('#submitReportBtn');
+
+    if (!detailId) {
+        toastr.error('REPORT ERROR', 'Telemarketing item not found.');
+        return;
+    }
+
+    if (!remarks) {
+        toastr.warning('REPORT REQUIRED', 'Please enter remarks before submitting the report.');
+        return;
+    }
+
+    $submitBtn.prop('disabled', true);
+
+    $.post('/telemarketing_details/report', {
+        _token: $('meta[name="csrf-token"]').attr('content'),
+        telemarketing_detail_id: detailId,
+        remarks: remarks
+    }).done(function(resp) {
+        $('#reportIssueModal').modal('hide');
+        $('#report_remarks').val('');
+        toastr.success('REPORT SUBMITTED', (resp && resp.message) ? resp.message : 'Report submitted successfully.');
+    }).fail(function(resp) {
+        var message = (resp.responseJSON && (resp.responseJSON.message || resp.responseJSON.error)) ? (resp.responseJSON.message || resp.responseJSON.error) : 'Unable to submit report.';
+        toastr.error('REPORT ERROR', message);
+    }).always(function() {
+        $submitBtn.prop('disabled', false);
     });
 }
 
@@ -546,6 +679,20 @@ function edit(id){
             $('#assigned_date').text(data.data.assigned_date);
             $('#call_duration').val(data.data.call_duration || '');
             updateProcessAllPoUI(data.relatedDetailCount || 1, false);
+            reportRecordContext = {
+                status: data.data.status || '--',
+                date: data.data.date || '--',
+                description: data.data.description || '--',
+                user: {
+                    name: data.data.user && data.data.user.name ? data.data.user.name : '--'
+                },
+                telemarketing: {
+                    company: {
+                        company_name: data.data.telemarketing.company.company_name || '--',
+                        contact_person: data.data.telemarketing.company.contact_person || '--'
+                    }
+                }
+            };
             if (data.data.csd.sale.sales_associate) {
                 $('#sales_associate').text(data.data.csd.sale.sales_associate.sales_associate);
             } else {
@@ -724,7 +871,9 @@ function viewDetails(id) {
         },
         columns: [
             { data: null, title: 'Action', searchable: false, orderable: false, render: function(data, type, row, meta) {
-                return '<a href="#" class="align-middle fas fa-fw fa-pen edit" title="Edit" data-toggle="modal" data-target="#defaultModalPrimary" id="'+row.id+'" onclick="edit_details('+row.id+')"></a>' + '<a href="#" data-toggle="modal" data-target="#confirmation" onclick="deleteRecord('+row.id+', 1)"><i class="align-middle fas fa-fw fa-trash"></i></a>';
+                return '<a href="#" class="align-middle fas fa-fw fa-pen edit" title="Edit" data-toggle="modal" data-target="#defaultModalPrimary" id="'+row.id+'" onclick="edit_details('+row.id+')"></a>' +
+                    '<a href="#" class="report-action" title="Report this item" onclick="openReportModal(' + row.id + ', this)"><i class="align-middle fas fa-fw fa-flag"></i></a>' +
+                    '<a href="#" data-toggle="modal" data-target="#confirmation" onclick="deleteRecord('+row.id+', 1)"><i class="align-middle fas fa-fw fa-trash"></i></a>';
             }},
             { data: 'date', title: 'Date', render: function(data, type, row, meta) {
                 return moment(row.date).format('MMM-DD-YYYY');
@@ -934,7 +1083,8 @@ function generateRecord() {
                 return '<input type="checkbox" class="select-row" data-id="' + row.id + '">';
             }},
             { data: null, title: 'Action', searchable: false, orderable: false, render: function(data, type, row, meta) {
-                return '<a href="#" onclick="edit(' + row.id + ')"><i class="align-middle fas fa-fw fa-tasks"></i></a>';
+                return '<a href="#" onclick="edit(' + row.id + ')"><i class="align-middle fas fa-fw fa-tasks"></i></a>' +
+                    '<a href="#" class="report-action" title="Report this item" onclick="openReportModal(' + row.id + ', this)"><i class="align-middle fas fa-fw fa-flag"></i></a>';
             }},
             { data: 'date', title: 'Date', 
                 render: function(data) {

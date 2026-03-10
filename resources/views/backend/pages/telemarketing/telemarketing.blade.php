@@ -263,7 +263,10 @@
                         
                     </div>
                     <div class="modal-footer text-right">
-                        <button id="saveRecordDetailsBtn" class="btn btn-primary" onclick="saveRecordDetails()">SAVE</button>
+                        <button id="openReportFromModalBtn" type="button" class="btn btn-danger mr-2" onclick="reportCurrentTelemarketingDetail()">
+                            <i class="fas fa-flag"></i> REPORT
+                        </button>
+                        <button id="saveRecordDetailsBtn" class="btn btn-success" onclick="saveRecordDetails()">SAVE</button>
                     </div>
                 </div>
             </div>
@@ -322,6 +325,34 @@
                     </div>
                     <div class="modal-footer text-right">
                         <button class="btn btn-primary" onclick="assignedTask()">SAVE</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="reportIssueModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-md" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">REPORT TELEMARKETING ITEM</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="report_telemarketing_detail_id">
+                        <div class="form-group">
+                            <label>Record</label>
+                            <div id="report_record_context" class="report-context-box"></div>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label for="report_remarks">What should admin or developer check?</label>
+                            <textarea class="form-control" id="report_remarks" rows="5" placeholder="Describe the issue, wrong record, duplicate, wrong status, wrong amount, missing item, or anything that needs checking."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer text-right">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">CANCEL</button>
+                        <button type="button" class="btn btn-danger" id="submitReportBtn" onclick="submitTelemarketingReport()">SUBMIT REPORT</button>
                     </div>
                 </div>
             </div>
@@ -776,5 +807,20 @@ h1.display-5.mt-1 {
 }
 .bulk-process-panel label {
     font-size: 1rem;
+}
+.report-action {
+    color: #c82333;
+    margin-left: 8px;
+}
+.report-action:hover {
+    color: #8b1e28;
+}
+.report-context-box {
+    border: 1px solid #dee2e6;
+    background: #f8f9fa;
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.5;
 }
 </style>
