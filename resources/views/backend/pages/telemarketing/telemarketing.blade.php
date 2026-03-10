@@ -199,6 +199,19 @@
                                     <table id="generated_table_details" class="table table-striped" style="width:100%"></table>
                                 </div>
                                 <div class="row">
+                                    <div class="form-group col-12" id="processAllPoContainer" style="display:none;">
+                                        <div class="alert alert-warning bulk-process-panel mb-0">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" class="custom-control-input" id="process_all_po" name="process_all_po">
+                                                <label class="custom-control-label font-weight-bold" for="process_all_po">
+                                                    Apply this update to all items in the same PO/FO
+                                                </label>
+                                            </div>
+                                            <small class="form-text text-dark mb-0" id="process_all_po_help">
+                                                This PO/FO has multiple item rows. Enable this to process them all in one save.
+                                            </small>
+                                        </div>
+                                    </div>
                                     <div class="form-group col-12">
                                         <label>Status</label>
                                         <select name="status" id="status" class="form-control">
@@ -747,5 +760,12 @@ h1.display-5.mt-1 {
       top: -3px;
     }
   }
+}
+.bulk-process-panel {
+    border: 2px solid #f0ad4e;
+    background: #fff8e1;
+}
+.bulk-process-panel label {
+    font-size: 1rem;
 }
 </style>

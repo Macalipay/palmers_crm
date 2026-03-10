@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Collection;
 use Auth;
 
 class TelemarketingDetailController extends Controller
@@ -108,11 +109,17 @@ class TelemarketingDetailController extends Controller
 
         $telemarketing = TelemarketingDetail::where('id', $id)->first();
         $sale_detail = SaleDetail::where('id', $telemarketing->order_id)->first();
-        $sale = Sale::where('id', $sale_detail->sale_id)->first();
+        $relatedDetailCount = 1;
+
+        if ($sale_detail) {
+            $relatedDetailCount = TelemarketingDetail::whereHas('csd', function ($query) use ($sale_detail) {
+                $query->where('sale_id', $sale_detail->sale_id);
+            })->count();
+        }
 
         $call_logs = TelemarketingCallLog::with('sale', 'telemarketing_detail', 'user')->where('telemarketing_detail_id', $id)->orderBy('created_at')->get();
         
-        return response()->json(compact('data', 'call_logs'));
+        return response()->json(compact('data', 'call_logs', 'relatedDetailCount'));
     }
 
     public function item($id)
@@ -123,8 +130,7 @@ class TelemarketingDetailController extends Controller
 
     public function update(Request $request, $id)
     {
-        $telemarketing = TelemarketingDetail::findOrFail($id);
-        $previousStatus = $telemarketing->status;
+        $telemarketing = TelemarketingDetail::with('csd')->findOrFail($id);
 
         $payload = $request->only([
             'new_order_id',
@@ -134,6 +140,7 @@ class TelemarketingDetailController extends Controller
             'remarks',
         ]);
         $payload['assigned_to'] = Auth::user()->id;
+        $processAllPo = $request->boolean('process_all_po');
 
         // Guard against schema drift on environments where newer migrations are not yet applied.
         if (!Schema::hasColumn('telemarketing_details', 'call_duration')) {
@@ -149,43 +156,93 @@ class TelemarketingDetailController extends Controller
             unset($payload['new_order_id']);
         }
 
-        $updated = $telemarketing->update($payload);
+        $targetDetails = $this->resolveTargetDetails($telemarketing, $processAllPo);
+        $updatedCount = 0;
 
-        if ($updated) {
-            $newStatus = $request->status;
-            $statusChanged = $previousStatus !== $newStatus;
+        DB::transaction(function () use ($targetDetails, $payload, $request, $telemarketing, $processAllPo, &$updatedCount) {
+            foreach ($targetDetails as $detail) {
+                $previousStatus = $detail->status;
+                $detailPayload = $this->buildDetailPayload($payload, $detail, $telemarketing, $processAllPo, $request->status);
+                $updated = $detail->update($detailPayload);
 
-            if ($statusChanged) {
-                $sale_detail = SaleDetail::where('id', $telemarketing->order_id)->first();
-                $sale = $sale_detail ? Sale::where('id', $sale_detail->sale_id)->first() : null;
+                if (!$updated) {
+                    continue;
+                }
 
-                $call_log = [
-                    'sale_id' => $sale->id ?? null,
-                    'telemarketing_detail_id' => $telemarketing->id,
-                    'new_order_id' => $request->new_order_id,
-                    'total_amount' => $request->total_amount,
-                    'status' => $newStatus,
-                    'remarks' => $request->remarks,
-                    'created_by' => Auth::user()->id,
-                    'updated_by' => Auth::user()->id,
-                ];
+                $updatedCount++;
+                $newStatus = $request->status;
+                $statusChanged = $previousStatus !== $newStatus;
 
-                TelemarketingCallLog::create($call_log);
+                if ($statusChanged) {
+                    $sale_detail = SaleDetail::where('id', $detail->order_id)->first();
+                    $sale = $sale_detail ? Sale::where('id', $sale_detail->sale_id)->first() : null;
 
-                Log::info('Telemarketing status changed', [
-                    'telemarketing_detail_id' => $telemarketing->id,
-                    'sale_id' => $sale->id ?? null,
-                    'changed_by' => Auth::user()->id,
-                    'status_from' => $previousStatus,
-                    'status_to' => $newStatus,
-                    'changed_at' => now()->toDateTimeString(),
-                ]);
+                    $call_log = [
+                        'sale_id' => $sale->id ?? null,
+                        'telemarketing_detail_id' => $detail->id,
+                        'new_order_id' => $request->new_order_id,
+                        'total_amount' => $detailPayload['total_amount'] ?? null,
+                        'status' => $newStatus,
+                        'remarks' => $request->remarks,
+                        'created_by' => Auth::user()->id,
+                        'updated_by' => Auth::user()->id,
+                    ];
+
+                    TelemarketingCallLog::create($call_log);
+
+                    Log::info('Telemarketing status changed', [
+                        'telemarketing_detail_id' => $detail->id,
+                        'sale_id' => $sale->id ?? null,
+                        'changed_by' => Auth::user()->id,
+                        'status_from' => $previousStatus,
+                        'status_to' => $newStatus,
+                        'changed_at' => now()->toDateTimeString(),
+                    ]);
+                }
             }
-            
-            return response()->json(['message' => 'Update saved successfully.']);
+        });
+
+        if ($updatedCount > 0) {
+            $message = $processAllPo && $updatedCount > 1
+                ? 'Updated ' . $updatedCount . ' telemarketing item(s) under the same PO/FO.'
+                : 'Update saved successfully.';
+
+            return response()->json(['message' => $message, 'updated_count' => $updatedCount]);
         }
 
         return response()->json(['error' => 'Failed to update telemarketing detail.'], 500);
+    }
+
+    private function resolveTargetDetails(TelemarketingDetail $telemarketing, bool $processAllPo): Collection
+    {
+        if (!$processAllPo || !$telemarketing->csd) {
+            return collect([$telemarketing]);
+        }
+
+        $saleId = $telemarketing->csd->sale_id;
+
+        if (!$saleId) {
+            return collect([$telemarketing]);
+        }
+
+        $details = TelemarketingDetail::with('csd')
+            ->whereHas('csd', function ($query) use ($saleId) {
+                $query->where('sale_id', $saleId);
+            })
+            ->get();
+
+        return $details->isNotEmpty() ? $details : collect([$telemarketing]);
+    }
+
+    private function buildDetailPayload(array $payload, TelemarketingDetail $detail, TelemarketingDetail $currentDetail, bool $processAllPo, ?string $status): array
+    {
+        $detailPayload = $payload;
+
+        if ($processAllPo && $status === 'COMPLETED' && $detail->id !== $currentDetail->id) {
+            unset($detailPayload['total_amount']);
+        }
+
+        return $detailPayload;
     }
 
     public function destroy($id)

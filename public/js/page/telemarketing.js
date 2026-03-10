@@ -22,6 +22,23 @@ var filter = {
     calls: '',
 };
 
+function updateProcessAllPoUI(relatedDetailCount, viewOnly) {
+    var hasMultipleItems = (relatedDetailCount || 1) > 1;
+
+    $('#process_all_po').prop('checked', false);
+
+    if (!hasMultipleItems) {
+        $('#processAllPoContainer').hide();
+        $('#process_all_po').prop('disabled', true);
+        $('#process_all_po_help').text('Only one telemarketing item is linked to this PO/FO.');
+        return;
+    }
+
+    $('#processAllPoContainer').show();
+    $('#process_all_po').prop('disabled', !!viewOnly);
+    $('#process_all_po_help').text('This PO/FO has ' + relatedDetailCount + ' telemarketing item rows. Enable this to update all of them in one save.');
+}
+
 function setRecordDetailsMode(viewOnly) {
     isPofoViewMode = viewOnly;
 
@@ -30,6 +47,9 @@ function setRecordDetailsMode(viewOnly) {
     $('#new_order_id').prop('disabled', viewOnly);
     $('#total_amount').prop('disabled', viewOnly);
     $('#remarks').prop('disabled', viewOnly);
+    if ($('#processAllPoContainer').is(':visible')) {
+        $('#process_all_po').prop('disabled', viewOnly);
+    }
 
     $('#saveRecordDetailsBtn').toggle(!viewOnly);
     $('#backOriginalPofoBtn').toggle(viewOnly);
@@ -479,7 +499,8 @@ function edit(id){
             $('#item_price').text('₱' + itemAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 }));
             $('#detail_remarks').text(data.data.remarks);
             $('#assigned_date').text(data.data.assigned_date);
-            $('#call_duration').text(data.data.call_duration);
+            $('#call_duration').val(data.data.call_duration || '');
+            updateProcessAllPoUI(data.relatedDetailCount || 1, false);
             if (data.data.csd.sale.sales_associate) {
                 $('#sales_associate').text(data.data.csd.sale.sales_associate.sales_associate);
             } else {
@@ -721,6 +742,7 @@ function saveRecordDetails() {
         status: $('#status').val(),
         call_duration: $('#call_duration').val(),
         remarks: $('#remarks').val(),
+        process_all_po: $('#process_all_po').is(':checked') ? 1 : 0,
     }
 
     var $saveBtn = $('#saveRecordDetailsBtn');
@@ -744,6 +766,8 @@ function saveRecordDetails() {
             var message = (resp.responseJSON && (resp.responseJSON.error || resp.responseJSON.message)) ? (resp.responseJSON.error || resp.responseJSON.message) : 'Unable to save changes.';
             toastr.error('SAVE ERROR', message);
         }
+    }).always(function() {
+        $saveBtn.prop('disabled', false);
     });
 }
 
@@ -756,6 +780,14 @@ function clearDetails() {
     $('#president').val('');
     $('#details_color').val('#000000');
     $('#status').val('1');
+    $('#call_duration').val('');
+    $('#new_order_id').val('');
+    $('#total_amount').val('');
+    $('#remarks').val('');
+    $('#process_all_po').prop('checked', false);
+    $('#process_all_po').prop('disabled', true);
+    $('#processAllPoContainer').hide();
+    $('#process_all_po_help').text('This PO/FO has multiple item rows. Enable this to process them all in one save.');
 }
 
 function filterRecord() {
@@ -1043,6 +1075,7 @@ function viewCompanyPofoHistory() {
         $('#detail_remarks').text('--');
         $('#assigned_date').text('--');
         $('#completedField').hide();
+        $('#processAllPoContainer').hide();
         setRecordDetailsMode(true);
         $('#companyPofoModal').modal('hide');
     });
@@ -1069,6 +1102,7 @@ function backToOriginalPofo() {
     $('#status').val(originalPofoState.status);
     $('#remarks').val(originalPofoState.remarksValue);
     $('#call_duration').val(originalPofoState.callDuration);
+    $('#process_all_po').prop('checked', false);
 
     if (originalPofoState.status === 'COMPLETED') {
         $('#completedField').show();
