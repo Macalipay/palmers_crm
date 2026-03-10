@@ -181,13 +181,23 @@
 					</button>
 				</div>
 				<div class="modal-body m-3">
+					@if (session('photo_success'))
+						<div class="alert alert-success">{{ session('photo_success') }}</div>
+					@endif
+
+					@if ($errors->changePhoto->any())
+						@foreach ($errors->changePhoto->all() as $error)
+							<p class="text-danger">{{ $error }}</p>
+						@endforeach
+					@endif
+
 					<form method="POST" action="{{ route('change.picture') }}" enctype="multipart/form-data">
 						@csrf
 						<div class="form-group row">
 							<input type="hidden" name="user_id" id="user_id" value="{{Auth::user()->id}}"/>
 							<label class="col-form-label col-sm-3 text-sm-right">Profile Picture</label>
 							<div class="col-sm-9">
-								<input type="file" name="picture" class="form-control">
+								<input type="file" name="picture" class="form-control" accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
 							</div>
 						</div>
 
@@ -228,7 +238,9 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 	<script>
 		$(document).ready(function(){
-
+			@if (session('photo_success') || $errors->changePhoto->any())
+				$('#changePhotoModal').modal('show');
+			@endif
 		})
 	</script>
 	@yield('scripts')

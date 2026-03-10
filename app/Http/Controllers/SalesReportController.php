@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SalesReportExport;
 use App\Branch;
 use App\Company;
 use App\Division;
@@ -11,7 +12,10 @@ use App\SalesAssociate;
 use App\Source;
 use App\Store;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Excel as ExcelWriter;
 use Yajra\DataTables\Facades\DataTables;
 
 class SalesReportController extends Controller
@@ -74,6 +78,112 @@ class SalesReportController extends Controller
         ]);
     }
 
+    public function export(Request $request)
+    {
+        $format = strtolower((string) $request->get('format', 'xlsx'));
+        if (!in_array($format, ['xlsx', 'csv', 'json'])) {
+            $format = 'xlsx';
+        }
+
+        $query = $this->buildQuery($request)->with([
+            'company',
+            'store',
+            'source',
+            'user',
+            'sales_associate',
+            'merchandiser',
+            'division',
+            'branch',
+        ])->orderByDesc('id');
+
+        if ($format === 'json') {
+            $total = (clone $query)->count();
+            $maxJsonRows = 5000;
+            if ($total > $maxJsonRows) {
+                return response()->json([
+                    'message' => 'Too many records for browser export. Please use Excel or CSV export.',
+                ], 422);
+            }
+
+            return response()->json($this->buildExportData((clone $query)->get()));
+        }
+
+        $filename = 'sales_report_' . date('Ymd_His') . '.' . $format;
+        $writerType = $format === 'csv' ? ExcelWriter::CSV : ExcelWriter::XLSX;
+
+        return Excel::download(new SalesReportExport($query), $filename, $writerType);
+    }
+
+    private function buildExportData($sales)
+    {
+        $headings = [
+            '#',
+            'Company',
+            'Store',
+            'Industry',
+            'Source',
+            'Payment Term',
+            'PO/OF No',
+            'Date Purchased',
+            'Amount',
+            'Sales Agent',
+            'Sales Associate',
+            'Merchandiser',
+            'Division',
+            'Branch',
+            'Agreed Delivery',
+            'Actual Delivery',
+            'Date Posted',
+            'Date Encode',
+            'Date Received',
+            'Date Filed',
+            'Deadline',
+            'Project Title',
+            'Contact Person',
+            'Telephone',
+            'Email',
+            'Status',
+        ];
+
+        $rows = [];
+        $index = 1;
+        foreach ($sales as $sale) {
+            $rows[] = [
+                $index++,
+                optional($sale->company)->company_name ?: '--',
+                optional($sale->store)->store_name ?: '--',
+                optional($sale->company)->industry ?: '--',
+                optional($sale->source)->source ?: '--',
+                $sale->payment_term ?: '--',
+                $sale->po_no ?: '--',
+                $this->formatDate($sale->date_purchased),
+                is_null($sale->amount) ? 0 : (float) $sale->amount,
+                optional($sale->user)->name ?: '--',
+                optional($sale->sales_associate)->sales_associate ?: '--',
+                optional($sale->merchandiser)->merchandiser ?: '--',
+                optional($sale->division)->division ?: '--',
+                optional($sale->branch)->branch_name ?: '--',
+                $this->formatDate($sale->agreed_delivery_date),
+                $this->formatDate($sale->actual_delivery_date),
+                $this->formatDate($sale->date_posted),
+                $this->formatDate($sale->date_encode),
+                $this->formatDate($sale->date_received),
+                $this->formatDate($sale->date_filed),
+                $this->formatDate($sale->deadline),
+                $sale->project_title ?: '--',
+                $sale->contact_person ?: '--',
+                $sale->telephone_no ?: '--',
+                $sale->email ?: '--',
+                ((string) $sale->active === '1') ? 'ACTIVE' : 'INACTIVE',
+            ];
+        }
+
+        return [
+            'headings' => $headings,
+            'rows' => $rows,
+        ];
+    }
+
     private function buildQuery(Request $request)
     {
         $query = Sale::query();
@@ -121,6 +231,19 @@ class SalesReportController extends Controller
 
         if (!empty($end)) {
             $query->whereDate($column, '<=', $end);
+        }
+    }
+
+    private function formatDate($value)
+    {
+        if (empty($value)) {
+            return '--';
+        }
+
+        try {
+            return Carbon::parse($value)->format('M d, Y');
+        } catch (\Exception $e) {
+            return '--';
         }
     }
 }

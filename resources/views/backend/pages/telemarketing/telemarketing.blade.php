@@ -19,6 +19,9 @@
                                 <button type="button" class="btn btn-warning btn-sm mr-2"  onclick="filterRecord()" style="float:right">
                                     FILTER RECORD
                                 </button>
+                                <button type="button" id="showAllRecordsBtn" class="btn btn-secondary btn-sm mr-2" onclick="showAllRecordsFromCounter()" style="float:right; display:none;">
+                                    SHOW ALL RECORDS
+                                </button>
                             </h5>
                         </div>
                         <div class="card-body col-12">
@@ -40,7 +43,7 @@
                 </div>
                 <div class="col-md-2">
                     <div class="card legend-card">
-                        <div class="card-body side-card">
+                        <div class="card-body side-card counter-card" onclick="viewCounterRecords('completed')" title="View all completed calls today">
                             <div class="row">
                                 <div class="col mt-0">
                                     <h5 class="card-title">Completion Rate</h5>
@@ -62,7 +65,7 @@
                         </div>
                     </div>
                     <div class="card legend-card">
-                        <div class="card-body side-card">
+                        <div class="card-body side-card counter-card" onclick="viewCounterRecords('not_completed')" title="View all not completed calls today">
                             <div class="row">
                                 <div class="col mt-0">
                                     <h5 class="card-title">All Completed Calls Today</h5>
@@ -83,7 +86,7 @@
                         </div>
                     </div>
                     <div class="card legend-card">
-                        <div class="card-body side-card">
+                        <div class="card-body side-card counter-card" onclick="viewCounterRecords('done')" title="View all done calls today">
                             <div class="row">
                                 <div class="col mt-0">
                                     <h5 class="card-title">Not Completed</h5>
@@ -691,6 +694,12 @@ h1.display-5.mt-1 {
 }
 .card.legend-card {
     margin-bottom: 10px;
+}
+.counter-card {
+    cursor: pointer;
+}
+.counter-card:hover {
+    box-shadow: 0 0 0 2px rgba(150, 3, 1, 0.15) inset;
 }
 /* .wrapper:before {
     height: 70px !important;

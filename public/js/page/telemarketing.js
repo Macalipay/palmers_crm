@@ -10,6 +10,7 @@ var isPofoViewMode = false;
 var delete_module = null;
 var selectedIds = []; 
 var counterTimer = null;
+var sessionRedirecting = false;
 
 var filter = {
     _token: '',
@@ -95,7 +96,120 @@ function applyCompletionRateColor(rate) {
     $label.addClass(colorClass);
 }
 
+function renderAddressCell(data, type, row) {
+    var address = row && row.telemarketing && row.telemarketing.company ? row.telemarketing.company.address : data;
+
+    if (!address) {
+        return '--';
+    }
+
+    if (type === 'display') {
+        var shortAddress = address.length > 30 ? address.substr(0, 30) + '...' : address;
+        return '<span title="' + address + '">' + shortAddress + '</span>';
+    }
+
+    return address;
+}
+
+function getMainTableColumns() {
+    return [
+        { data: null, title: '<input type="checkbox" id="select-all">', searchable: false, orderable: false, render: function(data, type, row, meta) {
+            return '<input type="checkbox" class="select-row" data-id="' + row.id + '">';
+        }},
+        { data: null, title: 'Action', searchable: false, orderable: false, render: function(data, type, row, meta) {
+            return '<a href="#" onclick="edit(' + row.id + ')"><i class="align-middle fas fa-fw fa-tasks"></i></a>';
+        }},
+        { data: 'date', title: 'Date',
+            render: function(data) {
+                return data ? moment(data).format('MMM D, YYYY') : '';
+            }
+        },
+        {
+            data: 'user.name',
+            title: 'Assigned to',
+            render: function(data, type, row) {
+                return row.user.name === 'Super Admin' ? 'UNASSIGNED' : row.user.name;
+            }
+        },
+        {
+            data: 'assigned_date',
+            title: 'Assigned Date',
+            render: function(data) {
+                return data ? moment(data).format('MMM D, YYYY') : '--';
+            }
+        },
+        { data: 'status', title: 'Status', render: function(data, type, row, meta) {
+            var html;
+            if (row.status === 'TO DO') {
+                html = '<span class="badge badge-primary">TO DO</span>';
+            } else if (row.status === 'IN PROGRESS') {
+                html = '<span class="badge badge-warning">IN PROGRESS</span>';
+            } else if (row.status === 'CANCELLED') {
+                html = '<span class="badge badge-danger">CANCELLED</span>';
+            } else if (row.status === 'PENDING') {
+                html = '<span class="badge badge-info">PENDING</span>';
+            } else if (row.status === 'ON-HOLD') {
+                html = '<span class="badge badge-secondary">ON-HOLD</span>';
+            } else {
+                html = '<span class="badge badge-success">COMPLETED</span>';
+            }
+            return html;
+        }},
+        { data: 'telemarketing.company.company_name', title: 'Company Name' },
+        { data: 'telemarketing.company.contact_person', title: 'Contact Person' },
+        { data: 'telemarketing.company.contact_no', title: 'Contact No.' },
+        { data: 'description', title: 'Description',
+            render: function(data, type, row) {
+                if (!data) return "";
+                let cleanedData = data.replace("CUSTOMER ORDERED", "").trim();
+                let dateMatch = cleanedData.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+
+                if (dateMatch) {
+                    let formattedDate = moment(dateMatch[0]).format("MMM D, YYYY");
+                    cleanedData = cleanedData.replace(dateMatch[0], formattedDate);
+                }
+
+                return cleanedData;
+            }
+        },
+        { data: 'telemarketing.company.address', title: 'Address', render: renderAddressCell },
+        { data: 'remarks', title: 'Remarks' }
+    ];
+}
+
+function renderMainTable(ajaxConfig, serverSideMode) {
+    if ($.fn.DataTable.isDataTable('#generated_table')) {
+        $('#generated_table').DataTable().destroy();
+    }
+
+    $('#generated_table').DataTable({
+        responsive: false,
+        serverSide: serverSideMode,
+        paging: true,
+        scrollX: true,
+        ordering: false,
+        ajax: ajaxConfig,
+        columns: getMainTableColumns(),
+        rowCallback: function(row, data) {
+            $(row).css('cursor', 'pointer').on('dblclick', function(event) {
+                if (!$(event.target).is("input[type='checkbox'], a, i")) {
+                    edit(data.id);
+                }
+            });
+        }
+    });
+}
+
 $(function() {
+    $.fn.dataTable.ext.errMode = 'none';
+
+    $(document).ajaxError(function(event, xhr) {
+        handleSessionExpiry(xhr);
+    });
+
+    $(document).on('xhr.dt', function(e, settings, json, xhr) {
+        handleSessionExpiry(xhr);
+    });
 
     document.getElementById("sidebar").classList.add("toggled");
 
@@ -141,89 +255,19 @@ $(function() {
         clearInterval(counterTimer);
     }
     counterTimer = setInterval(refreshTelemarketingCounters, 10000);
+
+    // Always restore editable mode/button state when details modal closes.
+    $('#recordDetails').on('hidden.bs.modal', function() {
+        setRecordDetailsMode(false);
+        $('#saveRecordDetailsBtn').prop('disabled', false).show();
+    });
 });
 
 $(function() {
-    var table = $('#generated_table').DataTable({
-        responsive: false,
-        serverSide: true,
-        paging: true,
-        scrollX: true,
-        ordering: false,
-        ajax: {
-            url: '/' + page + '/get',
-            type: 'GET'
-        },
-        columns: [
-            { data: null, title: '<input type="checkbox" id="select-all">', searchable: false, orderable: false, render: function(data, type, row, meta) {
-                return '<input type="checkbox" class="select-row" data-id="' + row.id + '">';
-            }},
-            { data: null, title: 'Action', searchable: false, orderable: false, render: function(data, type, row, meta) {
-                return '<a href="#" onclick="edit(' + row.id + ')"><i class="align-middle fas fa-fw fa-tasks"></i></a>';
-            }},
-            { data: 'date', title: 'Date', 
-                render: function(data) {
-                    return data ? moment(data).format('MMM D, YYYY') : ''; 
-                }
-            },
-            {
-                data: 'user.name',
-                title: 'Assigned to',
-                render: function(data, type, row) {
-                    return row.user.name === 'Super Admin' ? 'UNASSIGNED' : row.user.name;
-                }
-            },
-            { data: 'status', title: 'Status', render: function(data, type, row, meta) {
-                var html;
-                if (row.status === 'TO DO') {
-                    html = '<span class="badge badge-primary">TO DO</span>';
-                } else if (row.status === 'IN PROGRESS') {
-                    html = '<span class="badge badge-warning">IN PROGRESS</span>';
-                } else if (row.status === 'CANCELLED') {
-                    html = '<span class="badge badge-danger">CANCELLED</span>';
-                } else if (row.status === 'PENDING') {
-                    html = '<span class="badge badge-info">PENDING</span>';
-                } else if (row.status === 'ON-HOLD') {
-                    html = '<span class="badge badge-secondary">ON-HOLD</span>';
-                } else {
-                    html = '<span class="badge badge-success">COMPLETED</span>';
-                }
-                return html;
-            }},
-            { data: 'telemarketing.company.company_name', title: 'Company Name' },
-            { data: 'telemarketing.company.contact_person', title: 'Contact Person' },
-            { data: 'telemarketing.company.contact_no', title: 'Contact No.' },
-            { data: 'description', title: 'Description',
-                render: function(data, type, row) {
-                    if (!data) return "";
-                    let cleanedData = data.replace("CUSTOMER ORDERED", "").trim();
-                    let dateMatch = cleanedData.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
-            
-                    if (dateMatch) {
-                        let formattedDate = moment(dateMatch[0]).format("MMM D, YYYY");
-                        cleanedData = cleanedData.replace(dateMatch[0], formattedDate);
-                    }
-            
-                    return cleanedData;
-                }
-            },
-            { data: 'telemarketing.company.address', title: 'Address', render: function(data, type, row) {
-                if (row.telemarketing.company.address != null) {
-                    return '<span title="' + data + '">' + (type === 'display' && data.length > 30 ? data.substr(0, 30) + '...' : data) + '</span>';
-                } else {
-                    return '--';
-                }
-            }},
-            { data: 'remarks', title: 'Remarks' }
-        ],
-        rowCallback: function(row, data) {
-            $(row).css('cursor', 'pointer').on('dblclick', function(event) {
-                if (!$(event.target).is("input[type='checkbox'], a, i")) { 
-                    edit(data.id); // Trigger edit function on double-click
-                }
-            });
-        }
-    });
+    renderMainTable({
+        url: '/' + page + '/get',
+        type: 'GET'
+    }, true);
     
 
   
@@ -325,6 +369,7 @@ $(function() {
     });
 
     $('#select-all').on('click', function() {
+        var table = $('#generated_table').DataTable();
         var rows = table.rows({ 'search': 'applied' }).nodes();
         $('input[type="checkbox"].select-row').click();
     });
@@ -794,6 +839,27 @@ function filterRecord() {
     $('#filterModal').modal('show');
 }
 
+function viewCounterRecords(type) {
+    if (!type) {
+        return;
+    }
+
+    renderMainTable({
+        url: '/telemarketing/counter-records/' + type,
+        type: 'GET'
+    }, true);
+
+    $('#showAllRecordsBtn').show();
+}
+
+function showAllRecordsFromCounter() {
+    renderMainTable({
+        url: '/' + page + '/get',
+        type: 'GET'
+    }, true);
+    $('#showAllRecordsBtn').hide();
+}
+
 function generateRecord() {
 
     filter._token = $('meta[name="csrf-token"]').attr('content');
@@ -826,24 +892,36 @@ function generateRecord() {
         {
             extend: 'excelHtml5',
             text: 'Download Excel',
-            className: 'btn btn-success btn-sm'
+            className: 'btn btn-success btn-sm',
+            exportOptions: {
+                orthogonal: 'export'
+            }
         },
         {
             extend: 'csvHtml5',
             text: 'Download CSV',
-            className: 'btn btn-info btn-sm'
+            className: 'btn btn-info btn-sm',
+            exportOptions: {
+                orthogonal: 'export'
+            }
         },
         {
             extend: 'pdfHtml5',
             text: 'Download PDF',
             className: 'btn btn-danger btn-sm',
             orientation: 'landscape',
-            pageSize: 'A4'
+            pageSize: 'A4',
+            exportOptions: {
+                orthogonal: 'export'
+            }
         },
         {
             extend: 'print',
             text: 'Print',
-            className: 'btn btn-secondary btn-sm'
+            className: 'btn btn-secondary btn-sm',
+            exportOptions: {
+                orthogonal: 'export'
+            }
         }
     ],
         ajax: {
@@ -868,6 +946,13 @@ function generateRecord() {
                 title: 'Assigned to',
                 render: function(data, type, row) {
                     return row.user.name === 'Super Admin' ? 'UNASSIGNED' : row.user.name;
+                }
+            },
+            {
+                data: 'assigned_date',
+                title: 'Assigned Date',
+                render: function(data) {
+                    return data ? moment(data).format('MMM D, YYYY') : '--';
                 }
             },
             { data: 'status', title: 'Status', render: function(data, type, row, meta) {
@@ -904,13 +989,7 @@ function generateRecord() {
                     return cleanedData;
                 }
             },
-            { data: 'telemarketing.company.address', title: 'Address', render: function(data, type, row) {
-                if (row.telemarketing.company.address != null) {
-                    return '<span title="' + data + '">' + (type === 'display' && data.length > 30 ? data.substr(0, 30) + '...' : data) + '</span>';
-                } else {
-                    return '--';
-                }
-            }},
+            { data: 'telemarketing.company.address', title: 'Address', render: renderAddressCell },
             { data: 'remarks', title: 'Remarks' }
         ],
         rowCallback: function(row, data) {
@@ -925,6 +1004,7 @@ function generateRecord() {
     $('#filterModal').modal('hide');
 
     $('#select-all')[0].checked = false;
+    $('#showAllRecordsBtn').hide();
 }
 
 function po_detail(id, item_id) {
