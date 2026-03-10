@@ -140,7 +140,7 @@ class TelemarketingDetailController extends Controller
             'remarks',
         ]);
         $payload['assigned_to'] = Auth::user()->id;
-        $processAllPo = $request->boolean('process_all_po');
+        $processAllPo = filter_var($request->input('process_all_po', false), FILTER_VALIDATE_BOOLEAN);
 
         // Guard against schema drift on environments where newer migrations are not yet applied.
         if (!Schema::hasColumn('telemarketing_details', 'call_duration')) {
