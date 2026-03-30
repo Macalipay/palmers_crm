@@ -11,6 +11,9 @@ class TelemarketingDetailReport extends Model
         'reported_by',
         'remarks',
         'status',
+        'resolution_remarks',
+        'resolved_by',
+        'resolved_at',
         'created_by',
         'updated_by',
     ];
@@ -23,5 +26,10 @@ class TelemarketingDetailReport extends Model
     public function reporter()
     {
         return $this->belongsTo(User::class, 'reported_by');
+    }
+
+    public function resolver()
+    {
+        return $this->belongsTo(User::class, 'resolved_by');
     }
 }

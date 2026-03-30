@@ -42,12 +42,6 @@
                         <i class="align-middle mr-2 fa fa-fw fa-fire-extinguisher" style="color:#153d77"></i> <span class="align-middle">Item/Product</span>
                     </a>
                 </li>
-                <li class="sidebar-item">
-                    <a class="sidebar-link" href="{{ url('calendar') }}">
-                        <i class="align-middle mr-2 fa fa-fw fa-calendar" style="color:#153d77"></i> <span class="align-middle">Calendar</span>
-                    </a>
-                </li>
-
             <li class="sidebar-header">
                 Transaction
             </li>
@@ -62,30 +56,10 @@
                             <i class="align-middle mr-2 fa fa-fw fa-money-bill-wave-alt" style="color:#153d77"></i> <span class="align-middle">OTC</span>
                         </a>
                     @endrole
-                    @role('SUPER ADMIN|Super Admin|FSD')
-                        <a class="sidebar-link" href="{{ url('fsd') }}">
-                            <i class="align-middle mr-2 fa fa-fw fa-money-bill-wave-alt" style="color:#153d77"></i> <span class="align-middle">FSD</span>
-                        </a>
-                    @endrole
-                    @role('SUPER ADMIN|Super Admin|ASD')
-                        <a class="sidebar-link" href="{{ url('asd') }}">
-                            <i class="align-middle mr-2 fa fa-fw fa-money-bill-wave-alt" style="color:#153d77"></i> <span class="align-middle">ASD</span>
-                        </a>
-                    @endrole
                 </li>
 
                 
                 @role('SUPER ADMIN|Super Admin')
-                    <li class="sidebar-item">
-                        <a href="#s_name" data-toggle="collapse" class="sidebar-link collapsed">
-                            <i class="align-middle mr-2 fas fa-fw fa-users"></i> <span class="align-middle">100 Names</span>
-                        </a>
-                        <ul id="s_name" class="sidebar-dropdown list-unstyled collapse " data-parent="#sidebar">
-                            <li class="sidebar-item"><a class="sidebar-link" href="{{ url('referral') }}">Referral</a></li>
-                            <li class="sidebar-item"><a class="sidebar-link" href="{{ url('referral/tree') }}">Referral Tree</a></li>
-                        </ul>
-                    </li>
-                
                 <li class="sidebar-item">
                     <a href="#telemarketing-sd" data-toggle="collapse" class="sidebar-link collapsed">
                         <i class="align-middle mr-2 fas fa-fw fa-users"></i> <span class="align-middle">CRM</span>

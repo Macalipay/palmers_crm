@@ -47,4 +47,15 @@ class TelemarketingDetail extends Model
     {
         return $this->belongsTo(SaleDetail::class, 'order_id');
     }
+
+    public function reports()
+    {
+        return $this->hasMany(TelemarketingDetailReport::class, 'telemarketing_detail_id');
+    }
+
+    public function openReports()
+    {
+        return $this->hasMany(TelemarketingDetailReport::class, 'telemarketing_detail_id')
+            ->where('status', 'OPEN');
+    }
 }

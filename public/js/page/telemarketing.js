@@ -324,13 +324,19 @@ function submitTelemarketingReport() {
     }).done(function(resp) {
         $('#reportIssueModal').modal('hide');
         $('#report_remarks').val('');
+        if ($.fn.DataTable.isDataTable('#generated_table')) {
+            $('#generated_table').DataTable().draw(false);
+        }
+        if ($.fn.DataTable.isDataTable('#generated_table_details')) {
+            $('#generated_table_details').DataTable().draw(false);
+        }
         toastr.success('REPORT SUBMITTED', (resp && resp.message) ? resp.message : 'Report submitted successfully.');
     }).fail(function(resp) {
         var message = (resp.responseJSON && (resp.responseJSON.message || resp.responseJSON.error)) ? (resp.responseJSON.message || resp.responseJSON.error) : 'Unable to submit report.';
         toastr.error('REPORT ERROR', message);
-    }).always(function() {
-        $submitBtn.prop('disabled', false);
-    });
+        }).always(function() {
+            $submitBtn.prop('disabled', false);
+        });
 }
 
 $(function() {
@@ -604,10 +610,12 @@ function pick_telemarketing() {
 }
 
 function assignedTask() {
+    var telemarketingId = $('#telemarketing_id').val();
+    var isCancelled = telemarketingId === '__cancelled__';
     var data = {
         _token: $('meta[name="csrf-token"]').attr('content'),
         records: selectedIds,
-        telemarketing_id: $('#telemarketing_id').val(),
+        telemarketing_id: telemarketingId,
     }
 
     $.post('/'+page+'/assign', data).done(function(resp) {
@@ -617,14 +625,16 @@ function assignedTask() {
         selectedIds = [];
         refreshTelemarketingCounters();
 
-        toastr.success("TELEMARKETING TASK", "Task Successfully Assigned")
+        toastr.success("TELEMARKETING TASK", isCancelled ? "Task Successfully Cancelled" : "Task Successfully Assigned")
     }).fail(function(resp) {
         var r = resp.responseJSON.errors;
 
         $('.form-control').removeClass('required');
-        $.each(r, function(i,v) {
-            $('#' + i).addClass('required');
-        });
+        if (r) {
+            $.each(r, function(i,v) {
+                $('#' + i).addClass('required');
+            });
+        }
     });
 }
 

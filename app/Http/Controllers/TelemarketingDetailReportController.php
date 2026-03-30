@@ -21,6 +21,7 @@ class TelemarketingDetailReportController extends Controller
 
         $query = TelemarketingDetailReport::with([
             'reporter',
+            'resolver',
             'telemarketingDetail.telemarketing.company',
             'telemarketingDetail.csd.sale',
         ])->orderBy('id', 'desc');
@@ -28,5 +29,26 @@ class TelemarketingDetailReportController extends Controller
         return DataTables::eloquent($query)
             ->addIndexColumn()
             ->make(true);
+    }
+
+    public function resolve(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'resolution_remarks' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $report = TelemarketingDetailReport::findOrFail($id);
+
+        $report->update([
+            'status' => 'RESOLVED',
+            'resolution_remarks' => $validated['resolution_remarks'] ?? null,
+            'resolved_by' => auth()->id(),
+            'resolved_at' => now(),
+            'updated_by' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'message' => 'Report marked as resolved.',
+        ]);
     }
 }

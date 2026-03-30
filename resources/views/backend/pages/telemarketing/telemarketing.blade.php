@@ -311,6 +311,7 @@
                                 <div class="form-group col-12">
                                     <label>Telemarketing</label>
                                     <select name="telemarketing_id" id="telemarketing_id" class="form-control">
+                                        <option value="__cancelled__"> CANCELLED </option>
                                         @foreach ($telemarketings as $telemarketing)
                                             @if ($telemarketing->id === 1)
                                                 <option value="{{ $telemarketing->id }}"> UNASSIGNED </option>

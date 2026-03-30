@@ -342,6 +342,7 @@ Route::group(['prefix' => 'telemarketing_details', 'middleware' => ['auth']], fu
 Route::group(['prefix' => 'telemarketing_item_reports', 'middleware' => ['auth']], function (){
     Route::get          ('/',                            'TelemarketingDetailReportController@index'                    )->name('page');
     Route::get          ('/get',                         'TelemarketingDetailReportController@get'                      )->name('get');
+    Route::post         ('/resolve/{id}',                'TelemarketingDetailReportController@resolve'                  )->name('resolve');
 });
 
 Route::group(['prefix' => 'home', 'middleware' => ['auth']], function (){

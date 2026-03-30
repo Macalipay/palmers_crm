@@ -1,0 +1,9 @@
+.git
+.gitignore
+.env
+docker-config.json
+node_modules
+vendor
+npm-debug.log
+yarn-error.log
+.DS_Store

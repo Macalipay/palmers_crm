@@ -16,6 +16,11 @@ use Yajra\DataTables\Facades\DataTables;
 
 class TelemarketingController extends Controller
 {
+    private function excludeReportedRecords($query)
+    {
+        return $query->whereDoesntHave('openReports');
+    }
+
     public function index()
     {
         $currentDate = Carbon::now()->toDateString();
@@ -30,6 +35,8 @@ class TelemarketingController extends Controller
                 $q->where('branch_id', 2);
             })
             ->select('telemarketing_details.*', 'telemarketing_details.created_at', 'telemarketing_details.updated_at', 'telemarketing_details.status');
+
+        $this->excludeReportedRecords($query);
 
         $query->where('assigned_to', $user->id);
 
@@ -93,6 +100,8 @@ class TelemarketingController extends Controller
             })
             ->where('sales.branch_id', '!=', 3);
 
+        $this->excludeReportedRecords($query);
+
         $query->where('telemarketing_details.assigned_to', $user->id);
 
         $daily_target = 60;
@@ -149,6 +158,7 @@ class TelemarketingController extends Controller
             ->whereHas('csd.item', function ($q) {
                 $q->where('branch_id', 2);
             })
+            ->whereDoesntHave('openReports')
             ->where('telemarketing_details.assigned_to', $user->id)
             ->where('sales.branch_id', '!=', 3)
             ->whereDate('telemarketing_details.updated_at', '=', $currentDate)
@@ -213,6 +223,7 @@ class TelemarketingController extends Controller
                     TelemarketingDetail::with(['user', 'telemarketing', 'telemarketing.company', 'csd', 'csd.item'])
                         ->join('sale_details', 'telemarketing_details.order_id', '=', 'sale_details.id')
                         ->join('sales', 'sale_details.sale_id', '=', 'sales.id') 
+                        ->whereDoesntHave('openReports')
                         ->whereHas('csd.item', function ($query) {
                             $query->where('branch_id', 2);
                         })
@@ -230,6 +241,7 @@ class TelemarketingController extends Controller
                     TelemarketingDetail::with(['user', 'telemarketing', 'telemarketing.company', 'csd', 'csd.item'])
                         ->join('sale_details', 'telemarketing_details.order_id', '=', 'sale_details.id')
                         ->join('sales', 'sale_details.sale_id', '=', 'sales.id') 
+                        ->whereDoesntHave('openReports')
                         ->whereHas('csd.item', function ($query) {
                             $query->where('branch_id', 2);
                         })
@@ -247,6 +259,7 @@ class TelemarketingController extends Controller
                     TelemarketingDetail::with(['user', 'telemarketing', 'telemarketing.company', 'csd', 'csd.item'])
                         ->join('sale_details', 'telemarketing_details.order_id', '=', 'sale_details.id')
                         ->join('sales', 'sale_details.sale_id', '=', 'sales.id') 
+                        ->whereDoesntHave('openReports')
                         ->whereHas('csd.item', function ($query) {
                             $query->where('branch_id', 2);
                         })
@@ -364,11 +377,28 @@ class TelemarketingController extends Controller
     }
 
     public function assignedTask(Request $request) {
+        $isCancelled = $request->telemarketing_id === '__cancelled__';
+        $status = $isCancelled ? 'CANCELLED' : null;
+
         foreach ($request->records as $key => $value) {
             $details = TelemarketingDetail::with('csd', 'csd.sale')->where('id', $value)->first();
+            if (!$details || !$details->csd) {
+                continue;
+            }
+
+            $updatePayload = ['assigned_date' => Carbon::now()];
+
+            if (!$isCancelled) {
+                $updatePayload['assigned_to'] = $request->telemarketing_id;
+            }
+
+            if ($status !== null) {
+                $updatePayload['status'] = $status;
+            }
+
             TelemarketingDetail::whereHas('csd.sale', function($q) use($details) {
                 $q->where('sale_id', $details->csd['sale_id']);
-            })->update(['assigned_to' => $request->telemarketing_id, 'assigned_date' => Carbon::now()]);
+            })->update($updatePayload);
         }
 
         return response()->json(['message' => 'success']);
@@ -404,6 +434,7 @@ class TelemarketingController extends Controller
         if(Auth::user()->hasRole('Super Admin') || Auth::user()->hasRole('SUPER ADMIN') || Auth::user()->hasRole('TELEMARKETING HEAD')) {
             $query = TelemarketingDetail::with('user', 'telemarketing', 'telemarketing.company', 'csd', 'csd.item') ->join('sale_details', 'telemarketing_details.order_id', '=', 'sale_details.id')
                 ->join('sales', 'sale_details.sale_id', '=', 'sales.id') 
+                ->whereDoesntHave('openReports')
                 ->whereHas('csd.item', function ($query) {
                     $query->where('branch_id', 2);
                 })
@@ -418,6 +449,7 @@ class TelemarketingController extends Controller
             ->orderBy('telemarketing_details.id', 'desc');
         } else {
             $query = TelemarketingDetail::with('user', 'telemarketing', 'telemarketing.company', 'csd', 'csd.item')
+            ->whereDoesntHave('openReports')
             ->when($request->accessories != 1, function ($query) {
                 $query->whereHas('csd.item', function ($query) {
                     $query->where('branch_id', 2);
@@ -435,7 +467,8 @@ class TelemarketingController extends Controller
         }
         if ($request->has('assigned_to') && !empty($request->assigned_to)) {
             \Log::info('Assigned to filter applied: ', [$request->assigned_to]);
-            $query->where('telemarketing_details.assigned_to', $request->assigned_to);
+            $query->where('telemarketing_details.assigned_to', $request->assigned_to)
+                ->where('telemarketing_details.status', '!=', 'CANCELLED');
         }
         if ($request->has('status') && !empty($request->status)) {
             \Log::info('Status filter applied: ', [$request->status]);
