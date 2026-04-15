@@ -222,7 +222,7 @@
                                             <option value="IN PROGRESS">IN PROGRESS</option>
                                             <option value="CANCELLED">CANCELLED</option>
                                             <option value="PENDING">PENDING</option>
-                                            <option value="ON-HOLD">ON-HOLD</option>
+                                            <option value="ON-HOLD">INACTIVE</option>
                                             <option value="COMPLETED">COMPLETED</option>
                                         </select>
                                     </div>
@@ -432,7 +432,7 @@
                                     <option value="IN PROGRESS">IN PROGRESS</option>
                                     <option value="CANCELLED">CANCELLED</option>
                                     <option value="PENDING">PENDING</option>
-                                    <option value="ON-HOLD">ON-HOLD</option>
+                                    <option value="ON-HOLD">INACTIVE</option>
                                     <option value="COMPLETED">COMPLETED</option>
                                 </select>
                             </div>
@@ -457,6 +457,19 @@
                                     <input type="text" class="form-control f_store_name" placeholder="Select Record" disabled>
                                     <div class="input-group-append">
                                         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#storeList">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group col-12">
+                                <label for="f_location_name">Location</label>
+                                <div class="input-group">
+                                    <input type="hidden" id="f_location" name="f_location" class="form-control col-10"/>
+                                    <input type="text" id="f_location_name" class="form-control" placeholder="Select Location" disabled>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#locationList">
                                             <i class="fas fa-search"></i>
                                         </button>
                                     </div>
@@ -556,6 +569,22 @@
                     </div>
                     <div class="modal-body m-3">
                         <table id="assign_table" class="table table-striped" style="width:100%"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="locationList" style="background: rgba(0,0,0,0.5);" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5>Location</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body m-3">
+                        <table id="location_table" class="table table-striped" style="width:100%"></table>
                     </div>
                 </div>
             </div>

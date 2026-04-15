@@ -15,7 +15,7 @@
             <div class="card-body">
                 <form id="telemarketing-report-filter">
                     <div class="form-row compact-row">
-                        <div class="form-group col-lg-4 col-md-6">
+                        <div class="form-group col-lg-3 col-md-6">
                             <label class="filter-label">Company</label>
                             <select name="company_id" class="form-control form-control-sm searchable-select">
                                 <option value="">All</option>
@@ -24,7 +24,7 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="form-group col-lg-4 col-md-6">
+                        <div class="form-group col-lg-3 col-md-6">
                             <label class="filter-label">Assigned To</label>
                             <select name="assigned_to" class="form-control form-control-sm searchable-select">
                                 <option value="">All</option>
@@ -35,7 +35,16 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="form-group col-lg-4 col-md-6">
+                        <div class="form-group col-lg-3 col-md-6">
+                            <label class="filter-label">Location</label>
+                            <select name="location_id" class="form-control form-control-sm searchable-select">
+                                <option value="">All</option>
+                                @foreach ($locations as $location)
+                                    <option value="{{ $location->id }}">{{ $location->province }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group col-lg-3 col-md-6">
                             <label class="filter-label">Status</label>
                             <select name="status" class="form-control form-control-sm searchable-select">
                                 <option value="">All</option>
@@ -43,7 +52,7 @@
                                 <option value="IN PROGRESS">IN PROGRESS</option>
                                 <option value="CANCELLED">CANCELLED</option>
                                 <option value="PENDING">PENDING</option>
-                                <option value="ON-HOLD">ON-HOLD</option>
+                                <option value="ON-HOLD">INACTIVE</option>
                                 <option value="COMPLETED">COMPLETED</option>
                             </select>
                         </div>
@@ -175,4 +184,3 @@
     }
 </style>
 @endsection
-

@@ -9,6 +9,7 @@ use App\Source;
 use App\Sale;
 use App\SaleDetail;
 use App\ItemDuration;
+use App\ProvinceName;
 use Illuminate\Http\Request;
 use Auth;
 use Carbon\Carbon;
@@ -81,8 +82,10 @@ class TelemarketingController extends Controller
 
         $telemarketings = User::where('branch_id', 2)->orWhere('id', 1)->get();
 
+        $locations = ProvinceName::where('active', 1)->orderBy('province')->get();
+
         return view('backend.pages.telemarketing.telemarketing', compact(
-            'telemarketings', 'total_backlogs', 'total_call_today', 'completed_call', 'overall_completed_call', 'complete_rate', 'daily_target'
+            'telemarketings', 'total_backlogs', 'total_call_today', 'completed_call', 'overall_completed_call', 'complete_rate', 'daily_target', 'locations'
         ));
     }
 
@@ -352,18 +355,17 @@ class TelemarketingController extends Controller
     {
         $data = TelemarketingDetail::where('id', $id)->first();
         $sale_detail = SaleDetail::where('id', $data->order_id)->first();
-        $itemDuration = ItemDuration::where('item_id', $sale_detail->item_id)->first();
         $sale = Sale::where('id', $sale_detail->sale_id)->first();
+        $itemDuration = ItemDuration::where('item_id', $sale_detail->item_id)->first();
 
+        $duration = 6;
 
-        if($sale_detail->description == 'BRANDNEW') {
+        if($itemDuration && $sale_detail->description == 'BRANDNEW') {
             $duration = $itemDuration->brandnew;
-        } else if ($sale_detail->description == 'REFILL') {
+        } else if ($itemDuration && $sale_detail->description == 'REFILL') {
             $duration = $itemDuration->refill;
-        } else if ($sale_detail->description == 'FOR WARRANTY'){
+        } else if ($itemDuration && $sale_detail->description == 'FOR WARRANTY'){
             $duration = $itemDuration->for_warranty;
-        } else {
-            $duration = 6;
         }
 
 
@@ -463,6 +465,12 @@ class TelemarketingController extends Controller
             \Log::info('Company filter applied: ', [$request->company]);
             $query->whereHas('telemarketing', function($q) use($request) {
                 $q->where('company_id', $request->company);
+            });
+        }
+        if ($request->has('location') && !empty($request->location)) {
+            \Log::info('Location filter applied: ', [$request->location]);
+            $query->whereHas('telemarketing.company', function($q) use($request) {
+                $q->where('province_id', $request->location);
             });
         }
         if ($request->has('assigned_to') && !empty($request->assigned_to)) {

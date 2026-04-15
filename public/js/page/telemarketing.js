@@ -17,6 +17,7 @@ var filter = {
     _token: '',
     assigned_to: '',
     company: '',
+    location: '',
     start: '',
     end: '',
     status: '',
@@ -138,6 +139,22 @@ function renderAddressCell(data, type, row) {
     return address;
 }
 
+function renderStatusBadge(status) {
+    if (status === 'TO DO') {
+        return '<span class="badge badge-primary">TO DO</span>';
+    } else if (status === 'IN PROGRESS') {
+        return '<span class="badge badge-warning">IN PROGRESS</span>';
+    } else if (status === 'CANCELLED') {
+        return '<span class="badge badge-danger">CANCELLED</span>';
+    } else if (status === 'PENDING') {
+        return '<span class="badge badge-info">PENDING</span>';
+    } else if (status === 'ON-HOLD') {
+        return '<span class="badge badge-dark">INACTIVE</span>';
+    }
+
+    return '<span class="badge badge-success">COMPLETED</span>';
+}
+
 function getMainTableColumns() {
     return [
         { data: null, title: '<input type="checkbox" id="select-all">', searchable: false, orderable: false, render: function(data, type, row, meta) {
@@ -167,21 +184,7 @@ function getMainTableColumns() {
             }
         },
         { data: 'status', title: 'Status', render: function(data, type, row, meta) {
-            var html;
-            if (row.status === 'TO DO') {
-                html = '<span class="badge badge-primary">TO DO</span>';
-            } else if (row.status === 'IN PROGRESS') {
-                html = '<span class="badge badge-warning">IN PROGRESS</span>';
-            } else if (row.status === 'CANCELLED') {
-                html = '<span class="badge badge-danger">CANCELLED</span>';
-            } else if (row.status === 'PENDING') {
-                html = '<span class="badge badge-info">PENDING</span>';
-            } else if (row.status === 'ON-HOLD') {
-                html = '<span class="badge badge-secondary">ON-HOLD</span>';
-            } else {
-                html = '<span class="badge badge-success">COMPLETED</span>';
-            }
-            return html;
+            return renderStatusBadge(row.status);
         }},
         { data: 'telemarketing.company.company_name', title: 'Company Name' },
         { data: 'telemarketing.company.contact_person', title: 'Contact Person' },
@@ -454,6 +457,20 @@ $(function() {
         ]
     });
 
+    $('#location_table').DataTable({
+        responsive: true,
+        serverSide: true,
+        paging: true,
+        ordering: false,
+        ajax: {
+            url: '/province/get',
+            type: 'GET'
+        },
+        columns: [
+            { data: 'province', title: 'Location' },
+        ]
+    });
+
     
     $('#company_table tbody').on('dblclick', 'tr', function () {
         var data = $('#company_table').DataTable().row( this ).data();
@@ -505,6 +522,15 @@ $(function() {
         $('#f_assigned_to').val(data.id);
 
         $('#assignedList').modal('hide');
+    });
+
+    $('#location_table tbody').on('dblclick', 'tr', function () {
+        var data = $('#location_table').DataTable().row(this).data();
+
+        $('#f_location_name').val(data.province);
+        $('#f_location').val(data.id);
+
+        $('#locationList').modal('hide');
     });
 
     $('#select-all').on('click', function() {
@@ -662,9 +688,10 @@ function edit(id){
 
 
             let itemName = data.data.csd.item.item_name;
-            let brandNew = data.data.csd.item.duration.brandnew + ' month';
-            let refill = data.data.csd.item.duration.refill + ' month';
-            let forWarranty = data.data.csd.item.duration.for_warranty + ' month';
+            let itemDuration = data.data.csd.item.duration || {};
+            let brandNew = (itemDuration.brandnew != null ? itemDuration.brandnew : 6) + ' month';
+            let refill = (itemDuration.refill != null ? itemDuration.refill : 6) + ' month';
+            let forWarranty = (itemDuration.for_warranty != null ? itemDuration.for_warranty : 6) + ' month';
             
             let newTitle = `Item: ${itemName}. Duration - Brand New: ${brandNew}, Refill: ${refill}, For Warranty: ${forWarranty}.`;
             
@@ -905,23 +932,7 @@ function viewDetails(id) {
                 }
             }},
             { data: 'status', title: 'Status', render:function(data, type, row, meta){
-                var html;
-
-                if (row.status == 'TO DO') {
-                    html = '<span class="badge badge-primary">TO DO</span>';
-                } else if(row.status == 'IN PROGRESS') {
-                    html = '<span class="badge badge-warning">IN PROGRESS</span>';
-                } else if(row.status == 'CANCELLED') {
-                    html = '<span class="badge badge-danger">CANCELLED</span>';
-                } else if(row.status == 'PENDING') {
-                    html = '<span class="badge badge-info">PENDING</span>';
-                } else if(row.status == 'ON-HOLD') {
-                    html = '<span class="badge badge-secondary">ON-HOLD</span>';
-                } else {
-                    html = '<span class="badge badge-success">COMPLETED</span>';
-                }
-
-                return html;
+                return renderStatusBadge(row.status);
             }},
         ]
     });
@@ -1024,6 +1035,7 @@ function generateRecord() {
     filter._token = $('meta[name="csrf-token"]').attr('content');
     filter.assigned_to = $('#f_assigned_to').val();
     filter.company = $('#f_company_id').val();
+    filter.location = $('#f_location').val();
     filter.start_date = $('#f_start').val();
     filter.end_date = $('#f_end').val();
     filter.p_start_date = $('#p_start').val();
@@ -1116,21 +1128,7 @@ function generateRecord() {
                 }
             },
             { data: 'status', title: 'Status', render: function(data, type, row, meta) {
-                var html;
-                if (row.status === 'TO DO') {
-                    html = '<span class="badge badge-primary">TO DO</span>';
-                } else if (row.status === 'IN PROGRESS') {
-                    html = '<span class="badge badge-warning">IN PROGRESS</span>';
-                } else if (row.status === 'CANCELLED') {
-                    html = '<span class="badge badge-danger">CANCELLED</span>';
-                } else if (row.status === 'PENDING') {
-                    html = '<span class="badge badge-info">PENDING</span>';
-                } else if (row.status === 'ON-HOLD') {
-                    html = '<span class="badge badge-secondary">ON-HOLD</span>';
-                } else {
-                    html = '<span class="badge badge-success">COMPLETED</span>';
-                }
-                return html;
+                return renderStatusBadge(row.status);
             }},
             { data: 'telemarketing.company.company_name', title: 'Company Name' },
             { data: 'telemarketing.company.contact_person', title: 'Contact Person' },
@@ -1356,6 +1354,8 @@ function backToOriginalPofo() {
 function clearFilter() {
     $('#f_assigned_to').val('');
     $('#f_company_id').val('');
+    $('#f_location').val('');
+    $('#f_location_name').val('');
     $('.f_start').val('');
     $('.f_end').val('');
     $('#p_start').val('');
@@ -1369,6 +1369,7 @@ function clearFilter() {
         _token: '',
         assigned_to: '',
         company: '',
+        location: '',
         start: '',
         end: '',
         start: '',

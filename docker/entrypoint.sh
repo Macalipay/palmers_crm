@@ -4,8 +4,10 @@ set -e
 cd /var/www/html
 
 mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
+mkdir -p storage/logs
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R ug+rwx storage bootstrap/cache
+find storage -type f -exec chmod ug+rw {} \;
 
 if [ ! -f vendor/autoload.php ]; then
     composer install --no-interaction --prefer-dist --optimize-autoloader
