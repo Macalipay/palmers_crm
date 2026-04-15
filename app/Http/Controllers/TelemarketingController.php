@@ -9,7 +9,6 @@ use App\Source;
 use App\Sale;
 use App\SaleDetail;
 use App\ItemDuration;
-use App\ProvinceName;
 use Illuminate\Http\Request;
 use Auth;
 use Carbon\Carbon;
@@ -82,10 +81,8 @@ class TelemarketingController extends Controller
 
         $telemarketings = User::where('branch_id', 2)->orWhere('id', 1)->get();
 
-        $locations = ProvinceName::where('active', 1)->orderBy('province')->get();
-
         return view('backend.pages.telemarketing.telemarketing', compact(
-            'telemarketings', 'total_backlogs', 'total_call_today', 'completed_call', 'overall_completed_call', 'complete_rate', 'daily_target', 'locations'
+            'telemarketings', 'total_backlogs', 'total_call_today', 'completed_call', 'overall_completed_call', 'complete_rate', 'daily_target'
         ));
     }
 
@@ -467,10 +464,10 @@ class TelemarketingController extends Controller
                 $q->where('company_id', $request->company);
             });
         }
-        if ($request->has('location') && !empty($request->location)) {
-            \Log::info('Location filter applied: ', [$request->location]);
+        if ($request->has('address') && !empty($request->address)) {
+            \Log::info('Address filter applied: ', [$request->address]);
             $query->whereHas('telemarketing.company', function($q) use($request) {
-                $q->where('province_id', $request->location);
+                $q->where('address', 'like', '%' . $request->address . '%');
             });
         }
         if ($request->has('assigned_to') && !empty($request->assigned_to)) {

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Company;
-use App\ProvinceName;
 use App\TelemarketingDetail;
 use App\User;
 use App\Exports\TelemarketingReportExport;
@@ -18,10 +17,9 @@ class TelemarketingReportController extends Controller
     public function index()
     {
         $companies = Company::where('active', 1)->orderBy('company_name')->get();
-        $locations = ProvinceName::where('active', 1)->orderBy('province')->get();
         $telemarketers = User::where('branch_id', 2)->orWhere('id', 1)->orderBy('name')->get();
 
-        return view('backend.pages.reports.telemarketing_report', compact('companies', 'telemarketers', 'locations'));
+        return view('backend.pages.reports.telemarketing_report', compact('companies', 'telemarketers'));
     }
 
     public function data(Request $request)
@@ -91,10 +89,10 @@ class TelemarketingReportController extends Controller
             });
         }
 
-        if ($request->filled('location_id')) {
-            $locationId = $request->location_id;
-            $query->whereHas('telemarketing.company', function ($q) use ($locationId) {
-                $q->where('province_id', $locationId);
+        if ($request->filled('address')) {
+            $address = $request->address;
+            $query->whereHas('telemarketing.company', function ($q) use ($address) {
+                $q->where('address', 'like', '%' . $address . '%');
             });
         }
 

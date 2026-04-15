@@ -17,7 +17,7 @@ var filter = {
     _token: '',
     assigned_to: '',
     company: '',
-    location: '',
+    address: '',
     start: '',
     end: '',
     status: '',
@@ -457,21 +457,6 @@ $(function() {
         ]
     });
 
-    $('#location_table').DataTable({
-        responsive: true,
-        serverSide: true,
-        paging: true,
-        ordering: false,
-        ajax: {
-            url: '/province/get',
-            type: 'GET'
-        },
-        columns: [
-            { data: 'province', title: 'Location' },
-        ]
-    });
-
-    
     $('#company_table tbody').on('dblclick', 'tr', function () {
         var data = $('#company_table').DataTable().row( this ).data();
 
@@ -522,15 +507,6 @@ $(function() {
         $('#f_assigned_to').val(data.id);
 
         $('#assignedList').modal('hide');
-    });
-
-    $('#location_table tbody').on('dblclick', 'tr', function () {
-        var data = $('#location_table').DataTable().row(this).data();
-
-        $('#f_location_name').val(data.province);
-        $('#f_location').val(data.id);
-
-        $('#locationList').modal('hide');
     });
 
     $('#select-all').on('click', function() {
@@ -1035,7 +1011,7 @@ function generateRecord() {
     filter._token = $('meta[name="csrf-token"]').attr('content');
     filter.assigned_to = $('#f_assigned_to').val();
     filter.company = $('#f_company_id').val();
-    filter.location = $('#f_location').val();
+    filter.address = $('#f_address').val();
     filter.start_date = $('#f_start').val();
     filter.end_date = $('#f_end').val();
     filter.p_start_date = $('#p_start').val();
@@ -1354,8 +1330,7 @@ function backToOriginalPofo() {
 function clearFilter() {
     $('#f_assigned_to').val('');
     $('#f_company_id').val('');
-    $('#f_location').val('');
-    $('#f_location_name').val('');
+    $('#f_address').val('');
     $('.f_start').val('');
     $('.f_end').val('');
     $('#p_start').val('');
@@ -1369,7 +1344,7 @@ function clearFilter() {
         _token: '',
         assigned_to: '',
         company: '',
-        location: '',
+        address: '',
         start: '',
         end: '',
         start: '',

@@ -36,13 +36,8 @@
                             </select>
                         </div>
                         <div class="form-group col-lg-3 col-md-6">
-                            <label class="filter-label">Location</label>
-                            <select name="location_id" class="form-control form-control-sm searchable-select">
-                                <option value="">All</option>
-                                @foreach ($locations as $location)
-                                    <option value="{{ $location->id }}">{{ $location->province }}</option>
-                                @endforeach
-                            </select>
+                            <label class="filter-label">Address</label>
+                            <input type="text" name="address" class="form-control form-control-sm" placeholder="Enter address">
                         </div>
                         <div class="form-group col-lg-3 col-md-6">
                             <label class="filter-label">Status</label>
